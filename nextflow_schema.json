@@ -10,26 +10,54 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": [
-                "input",
-                "outdir"
-            ],
             "properties": {
-                "input": {
+                "input_dir": {
                     "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/csv",
-                    "pattern": "^\\S+\\.csv$",
-                    "schema": "assets/schema_input.json",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/meerpipe/usage#samplesheet-input).",
-                    "fa_icon": "fas fa-file-csv"
+                    "default": "/fred/oz005/timing",
+                    "fa_icon": "fas fa-sign-in-alt",
+                    "description": "Base directory of input archive files"
                 },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open"
+                    "fa_icon": "fas fa-folder-open",
+                    "default": "/fred/oz005/users/nswainst/meerpipe_testing_outputs"
+                },
+                "upload": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Upload result to the database"
+                },
+                "ephemeris": {
+                    "type": "string",
+                    "default": "None",
+                    "description": "Path to the ephemris which will overwrite the default described above. Recommended to only be used for single observations."
+                },
+                "ephemerides_dir": {
+                    "type": "string",
+                    "default": "/fred/oz005/users/meerpipe/ephemerides",
+                    "description": "Base directory of the ephermerides. Will be used to find a default ephemeris: \\${ephemerides_dir}/\\${project}/\\${pulsar}.par"
+                },
+                "template": {
+                    "type": "string",
+                    "default": "None",
+                    "description": "Path to the template which will overwrite the default described above.  Recommended to only be used for single observations."
+                },
+                "templates_dir": {
+                    "type": "string",
+                    "default": "/fred/oz005/users/meerpipe/templates",
+                    "description": "Base directory of the templates. Will be used to find a default templates: \\${templates_dir}/\\${project}/\\${band}/\\${pulsar}.std"
+                },
+                "rm_cat": {
+                    "type": "string",
+                    "default": "/fred/oz005/users/aparthas/MSP_DataRelease/MeerPipe_Output/MeerTime_MSP_Census/meerpipe_rms_msps.txt",
+                    "description": "Path to  RM catalogue text file"
+                },
+                "dm_cat": {
+                    "type": "string",
+                    "default": "/fred/oz005/users/aparthas/MSP_DataRelease/MeerPipe_Output/MeerTime_MSP_Census/meerpipe_dms_msps.txt",
+                    "description": "Path to  DM catalogue text file"
                 },
                 "email": {
                     "type": "string",
@@ -37,6 +65,79 @@
                     "fa_icon": "fas fa-envelope",
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                }
+            }
+        },
+        "observation_selection": {
+            "title": "Observation selection",
+            "type": "object",
+            "description": "Filters to decide which observation to run",
+            "default": "",
+            "properties": {
+                "pulsar": {
+                    "type": "string",
+                    "fa_icon": "fas fa-address-card",
+                    "description": "Pulsar name for PSRDB search. Returns only observations with this pulsar name."
+                },
+                "utcs": {
+                    "type": "string",
+                    "fa_icon": "fas fa-calendar-check",
+                    "description": "Start UTC for PSRDB search.  Returns only observations after this UTC timestamp."
+                },
+                "utce": {
+                    "type": "string",
+                    "fa_icon": "far fa-calendar-check",
+                    "description": "End UTC for PSRDB search. Returns only observations before this UTC timestamp."
+                },
+                "obs_pid": {
+                    "type": "string",
+                    "fa_icon": "far fa-address-card",
+                    "description": "Project ID for PSRDB search. Return only observations matching this Project ID."
+                },
+                "list_in": {
+                    "type": "string",
+                    "default": "None",
+                    "fa_icon": "fas fa-list-ol",
+                    "hidden": true,
+                    "description": "List of observations to process, given in a standard format.."
+                },
+                "list_out": {
+                    "type": "string",
+                    "default": "false",
+                    "hidden": true,
+                    "description": "Write the list of observations submitted in a processing_jobs.csv file.",
+                    "fa_icon": "fas fa-th-list"
+                }
+            },
+            "fa_icon": "fas fa-filter"
+        },
+        "workflow_options": {
+            "title": "Workflow options",
+            "type": "object",
+            "description": "Options to change the pipeline logic",
+            "default": "",
+            "fa_icon": "fas fa-briefcase",
+            "help_text": "",
+            "properties": {
+                "use_edge_subints": {
+                    "type": "string",
+                    "default": "false",
+                    "description": "Use first and last 8 second subints of observation archives."
+                },
+                "tos_sn": {
+                    "type": "integer",
+                    "default": 12,
+                    "description": "Desired ToA S/N ratio, used to calculate the nsub to use"
+                },
+                "nchans": {
+                    "type": "string",
+                    "default": "1,4,16",
+                    "description": "Comma separated list of nchans to frequency scrunch the data into"
+                },
+                "npols": {
+                    "type": "string",
+                    "default": "1,4",
+                    "description": "Comma separated list of number of polarisations to scrunch the data into.."
                 }
             }
         },
@@ -214,6 +315,12 @@
             "$ref": "#/definitions/input_output_options"
         },
         {
+            "$ref": "#/definitions/observation_selection"
+        },
+        {
+            "$ref": "#/definitions/workflow_options"
+        },
+        {
             "$ref": "#/definitions/institutional_config_options"
         },
         {
@@ -224,105 +331,22 @@
         }
     ],
     "properties": {
-        "list_in": {
-            "type": "string",
-            "default": "None"
-        },
-        "list_out": {
-            "type": "string",
-            "default": "false"
-        },
-        "utcs": {
-            "type": "string",
-            "default": ""
-        },
-        "utce": {
-            "type": "string",
-            "default": ""
-        },
-        "obs_pid": {
-            "type": "string",
-            "default": ""
-        },
-        "pulsar": {
-            "type": "string",
-            "default": ""
-        },
-        "use_edge_subints": {
-            "type": "string",
-            "default": "false"
-        },
-        "tos_sn": {
-            "type": "integer",
-            "default": 12
-        },
-        "nchans": {
-            "type": "string",
-            "default": "1,4,16"
-        },
-        "npols": {
-            "type": "string",
-            "default": "1,4"
-        },
-        "upload": {
-            "type": "string",
-            "default": "true"
-        },
         "psrdb_url": {
             "type": "string",
-            "default": "https://pulsar.nickswainston.com/api/"
+            "description": "URL for interacting with the database API. Can be set with the $PSRDB_URL environment variable."
         },
         "psrdb_token": {
             "type": "string",
-            "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im5pY2siLCJleHAiOjE2OTAzNDMzNjYsIm9yaWdJYXQiOjE2OTAzNDMwNjZ9.FRBFDOQ-uy_Ok8h5DIwIbklhwki0WE_NbYYOgQlqr9Q"
-        },
-        "input_path": {
-            "type": "string",
-            "default": "/fred/oz005/timing"
-        },
-        "output_path": {
-            "type": "string",
-            "default": "/fred/oz005/users/nswainst/meerpipe_testing_outputs"
+            "description": "Token taken from environment variable and obtained using get_ingest_token.sh or get_token.sh. Can be set with the $PSRDB_TOKEN environment variable."
         },
         "type": {
             "type": "string",
             "default": "meertime"
         },
-        "overwrite": {
-            "type": "string",
-            "default": "true"
-        },
-        "rm_cat": {
-            "type": "string",
-            "default": "/fred/oz005/users/aparthas/MSP_DataRelease/MeerPipe_Output/MeerTime_MSP_Census/meerpipe_rms_msps.txt"
-        },
-        "dm_cat": {
-            "type": "string",
-            "default": "/fred/oz005/users/aparthas/MSP_DataRelease/MeerPipe_Output/MeerTime_MSP_Census/meerpipe_dms_msps.txt"
-        },
-        "ephemerides_dir": {
-            "type": "string",
-            "default": "/fred/oz005/users/meerpipe/ephemerides"
-        },
-        "templates_dir": {
-            "type": "string",
-            "default": "/fred/oz005/users/meerpipe/templates"
-        },
-        "ephemeris": {
-            "type": "string",
-            "default": "None"
-        },
-        "template": {
-            "type": "string",
-            "default": "None"
-        },
-        "output_vis": {
-            "type": "string",
-            "default": "false"
-        },
         "hostname": {
             "type": "string",
-            "default": "tooarrana1"
+            "default": "tooarrana1",
+            "hidden": true
         }
     }
 }
