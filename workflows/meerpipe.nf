@@ -316,7 +316,7 @@ process FLUXCAL {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/FLUXCAL", mode: 'copy', pattern: "*FLUXCAL"
+    publishDir "${params.outdir}/${pulsar}/${utc}/fluxcal", mode: 'copy', pattern: "*fluxcal"
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
     memory { "${task.attempt * dur.toFloat() * 30} MB"}
 
@@ -330,7 +330,7 @@ process FLUXCAL {
     # Create a time and polarisation scruchned profile
     pam -Tp -e tp ${cleaned_archive}
 
-    FLUXCAL -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -tpfile *tp -parfile ${ephemeris}
+    fluxcal -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -tpfile *tp -parfile ${ephemeris}
     """
 }
 
@@ -339,7 +339,7 @@ process DECIMATE {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/DECIMATEd", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
     memory { "${task.attempt * dur.toFloat() * 30} MB"}
 
