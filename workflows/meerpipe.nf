@@ -11,11 +11,10 @@ WorkflowMeerpipe.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [ ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,7 +64,7 @@ nchans = params.nchans.split(',').collect { it.toInteger() }
 npols  = params.npols.split(',').collect { it.toInteger() }
 
 
-process manifest_config_dump {
+process MANIFEST_CONFIG_DUMP {
     // Create a json of all the parameters used in this run
     label 'meerpipe'
 
@@ -93,8 +92,8 @@ process manifest_config_dump {
             "npols": "${params.npols}",
             "upload": "${params.upload}",
             "psrdb_url": "${params.psrdb_url}",
-            "input_path": "${params.input_path}",
-            "output_path": "${params.output_path}",
+            "input_dir": "${params.input_dir}",
+            "outdir": "${params.outdir}",
             "email": "${params.email}",
             "type": "${params.type}",
             "overwrite": "${params.overwrite}",
@@ -114,7 +113,7 @@ process manifest_config_dump {
 }
 
 
-process obs_list {
+process OBS_LIST {
     label 'meerpipe'
     publishDir "./", mode: 'copy', enabled: params.list_out
 
@@ -237,7 +236,7 @@ process obs_list {
                     "${params.manifest.description}",
                     "${params.manifest.version}",
                     "Running",
-                    "${params.output_path}",
+                    "${params.outdir}",
                     pipeline_config,
                 )
                 pipe_id = get_graphql_id(pipe_run_data, "pipeline_run", logging.getLogger(__name__))
@@ -251,11 +250,11 @@ process obs_list {
 }
 
 
-process psradd_calibrate_clean {
+process PSRADD_CALIBRATE_CLEAN {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.output_path}/${pulsar}/${utc}/calibrated", mode: 'copy', pattern: "*.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/calibrated", mode: 'copy', pattern: "*.ar"
     // scratch '$JOBFS'
     // clusterOptions  { "--tmp=${(task.attempt * dur.toFloat() * 12).toInteger()}MB" }
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
@@ -273,14 +272,14 @@ process psradd_calibrate_clean {
     """
     if ${params.use_edge_subints}; then
         # Grab all archives
-        archives=\$(ls ${params.input_path}/${pulsar}/${utc}/${beam}/*/*.ar)
+        archives=\$(ls ${params.input_dir}/${pulsar}/${utc}/${beam}/*/*.ar)
     else
-        if [ -z \$(ls ${params.input_path}/${pulsar}/${utc}/${beam}/*/*.ar | head -n-1 | tail -n+2) ]; then
+        if [ -z \$(ls ${params.input_dir}/${pulsar}/${utc}/${beam}/*/*.ar | head -n-1 | tail -n+2) ]; then
             # Grab all archives anyway because there are only two
-            archives=\$(ls ${params.input_path}/${pulsar}/${utc}/${beam}/*/*.ar)
+            archives=\$(ls ${params.input_dir}/${pulsar}/${utc}/${beam}/*/*.ar)
         else
             # Grab all archives except for the first and last one
-            archives=\$(ls ${params.input_path}/${pulsar}/${utc}/${beam}/*/*.ar | head -n-1 | tail -n+2)
+            archives=\$(ls ${params.input_dir}/${pulsar}/${utc}/${beam}/*/*.ar | head -n-1 | tail -n+2)
         fi
     fi
 
@@ -319,11 +318,11 @@ process psradd_calibrate_clean {
 }
 
 
-process fluxcal {
+process FLUXCAL {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.output_path}/${pulsar}/${utc}/fluxcal", mode: 'copy', pattern: "*fluxcal"
+    publishDir "${params.outdir}/${pulsar}/${utc}/FLUXCAL", mode: 'copy', pattern: "*FLUXCAL"
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
     memory { "${task.attempt * dur.toFloat() * 30} MB"}
 
@@ -337,16 +336,16 @@ process fluxcal {
     # Create a time and polarisation scruchned profile
     pam -Tp -e tp ${cleaned_archive}
 
-    fluxcal -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_path}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -tpfile *tp -parfile ${ephemeris}
+    FLUXCAL -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -tpfile *tp -parfile ${ephemeris}
     """
 }
 
 
-process decimate {
+process DECIMATE {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.output_path}/${pulsar}/${utc}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/DECIMATEd", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
     memory { "${task.attempt * dur.toFloat() * 30} MB"}
 
@@ -392,7 +391,7 @@ process decimate {
     """
 }
 
-process dm_rm_calc {
+process DM_RM_CALC {
     label 'cpu'
     label 'meerpipe'
 
@@ -400,10 +399,10 @@ process dm_rm_calc {
     memory { "${task.attempt**2 * dur.toFloat() * 60} MB"}
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives), path("${pulsar}_${utc}_dm_rm_fit.txt")
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path("${pulsar}_${utc}_dm_rm_fit.txt")
 
 
     // when:
@@ -473,23 +472,23 @@ process dm_rm_calc {
 }
 
 
-process generate_toas {
+process GENERATE_TOAS {
     label 'cpu'
     label 'psrchive'
 
-    publishDir "${params.output_path}/${pulsar}/${utc}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
+    publishDir "${params.outdir}/${pulsar}/${utc}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
     time   { "${task.attempt * dur.toFloat() * 1} s" }
     memory { "${task.attempt * dur.toFloat() * 3} MB"}
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives), path(dm_results)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives), path(dm_results), path("*.tim"), path("*.residual")
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results), path("*.tim"), path("*.residual")
 
     """
-    # Loop over each decimated archive
-    for ar in ${decimated_archives.join(' ')}; do
+    # Loop over each DECIMATEd archive
+    for ar in ${DECIMATEd_archives.join(' ')}; do
         if [[ \$ar == *"ch4p"* ]]; then
             # Skip if it is a full Stokes archive
             continue
@@ -528,18 +527,18 @@ process generate_toas {
 }
 
 
-process generate_images_results {
+process GENERATE_IMAGE_RESULTS {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.output_path}/${pulsar}/${utc}/images", mode: 'copy', pattern: "{c,t,r}*png"
-    publishDir "${params.output_path}/${pulsar}/${utc}/scintillation", mode: 'copy', pattern: "*dynspec*"
-    publishDir "${params.output_path}/${pulsar}/${utc}", mode: 'copy', pattern: "results.json"
+    publishDir "${params.outdir}/${pulsar}/${utc}/images", mode: 'copy', pattern: "{c,t,r}*png"
+    publishDir "${params.outdir}/${pulsar}/${utc}/scintillation", mode: 'copy', pattern: "*dynspec*"
+    publishDir "${params.outdir}/${pulsar}/${utc}", mode: 'copy', pattern: "results.json"
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
     memory { "${task.attempt**2 * dur.toFloat() * 60} MB"}
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives), path(dm_results), path(toas), path(residuals)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results), path(toas), path(residuals)
 
     output:
     tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(toas), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
@@ -564,12 +563,12 @@ process generate_images_results {
     pam -Fp -e rawFp ${raw_archive}
 
     # Create matplotlib images and dump the results calculations into a results.json file
-    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -residuals ${residuals} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
+    GENERATE_IMAGE_RESULTS -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -residuals ${residuals} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
     """
 }
 
 
-process upload_results {
+process UPLOAD_RESULTS {
     label 'meerpipe'
 
     maxForks 1
@@ -703,7 +702,7 @@ process upload_results {
     //             exit(1)
 
 
-process generate_residuals {
+process GENERATE_RESIDUALS {
     label 'meerpipe'
 
     maxForks 1
@@ -732,7 +731,7 @@ process generate_residuals {
 def multiqc_report = []
 
 workflow MEERPIPE {
-    manifest_config_dump()
+    MANIFEST_CONFIG_DUMP()
 
     // Use PSRDB to work out which obs to process
     if ( params.list_in ) {
@@ -740,40 +739,40 @@ workflow MEERPIPE {
         obs_data = Channel.fromPath( params.list_in ).splitCsv()
     }
     else {
-        obs_list(
+        OBS_LIST(
             params.utcs,
             params.utce,
             params.pulsar,
             params.obs_pid,
-            manifest_config_dump.out,
+            MANIFEST_CONFIG_DUMP.out,
         )
-        obs_data = obs_list.out.splitCsv()
+        obs_data = OBS_LIST.out.splitCsv()
     }
 
     // Combine archives,flux calibrate Clean of RFI with MeerGaurd
-    psradd_calibrate_clean( obs_data )
+    PSRADD_CALIBRATE_CLEAN( obs_data )
 
     // Flux calibrate
-    fluxcal( psradd_calibrate_clean.out )
+    FLUXCAL( PSRADD_CALIBRATE_CLEAN.out )
 
     // Decimate into different time and freq chunnks using pam
-    decimate( fluxcal.out )
+    DECIMATE( FLUXCAL.out )
 
     // Calculate the DM with tempo2 or pdmp
-    dm_rm_calc( decimate.out )
+    DM_RM_CALC( DECIMATE.out )
 
     // Generate TOAs
-    generate_toas( dm_rm_calc.out )
+    GENERATE_TOAS( DM_RM_CALC.out )
 
     // Other images using matplotlib and psrplot and make a results.json
-    generate_images_results( generate_toas.out )
+    GENERATE_IMAGE_RESULTS( GENERATE_TOAS.out )
 
     // Upload images and results
     if ( params.upload ) {
-        upload_results( generate_images_results.out )
+        UPLOAD_RESULTS( GENERATE_IMAGE_RESULTS.out )
 
         // For each pulsar (not each obs), download all toas and fit residuals
-        // generate_residuals( upload_results.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid, pipe_id, ephemeris.first() ] } )
+        // GENERATE_RESIDUALS( UPLOAD_RESULTS.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid, pipe_id, ephemeris.first() ] } )
     }
 }
 
