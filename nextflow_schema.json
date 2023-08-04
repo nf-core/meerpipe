@@ -5,6 +5,47 @@
     "description": "Pulsar timing data processing pipeline for MeerTime data.",
     "type": "object",
     "definitions": {
+        "observation_selection": {
+            "title": "Observation selection",
+            "type": "object",
+            "description": "Filters to decide which observation to run",
+            "default": "",
+            "properties": {
+                "pulsar": {
+                    "type": "string",
+                    "fa_icon": "fas fa-address-card",
+                    "description": "Pulsar name for PSRDB search. Returns only observations with this pulsar name."
+                },
+                "utcs": {
+                    "type": "string",
+                    "fa_icon": "fas fa-calendar-check",
+                    "description": "Start UTC for PSRDB search.  Returns only observations after this UTC timestamp."
+                },
+                "utce": {
+                    "type": "string",
+                    "fa_icon": "far fa-calendar-check",
+                    "description": "End UTC for PSRDB search. Returns only observations before this UTC timestamp."
+                },
+                "obs_pid": {
+                    "type": "string",
+                    "fa_icon": "far fa-address-card",
+                    "description": "Project ID for PSRDB search. Return only observations matching this Project ID."
+                },
+                "list_in": {
+                    "type": "string",
+                    "fa_icon": "fas fa-list-ol",
+                    "hidden": true,
+                    "description": "List of observations to process, given in a standard format.."
+                },
+                "list_out": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "description": "Write the list of observations submitted in a processing_jobs.csv file.",
+                    "fa_icon": "fas fa-th-list"
+                }
+            },
+            "fa_icon": "fas fa-filter"
+        },
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -26,7 +67,6 @@
                 },
                 "ephemeris": {
                     "type": "string",
-                    "default": "None",
                     "description": "Path to the ephemris which will overwrite the default described above. Recommended to only be used for single observations.",
                     "fa_icon": "fas fa-clock"
                 },
@@ -38,7 +78,6 @@
                 },
                 "template": {
                     "type": "string",
-                    "default": "None",
                     "description": "Path to the template which will overwrite the default described above.  Recommended to only be used for single observations.",
                     "fa_icon": "fas fa-chart-area"
                 },
@@ -69,52 +108,9 @@
                 },
                 "input": {
                     "type": "string",
-                    "default": "None",
                     "hidden": true
                 }
             }
-        },
-        "observation_selection": {
-            "title": "Observation selection",
-            "type": "object",
-            "description": "Filters to decide which observation to run",
-            "default": "",
-            "properties": {
-                "pulsar": {
-                    "type": "string",
-                    "fa_icon": "fas fa-address-card",
-                    "description": "Pulsar name for PSRDB search. Returns only observations with this pulsar name."
-                },
-                "utcs": {
-                    "type": "string",
-                    "fa_icon": "fas fa-calendar-check",
-                    "description": "Start UTC for PSRDB search.  Returns only observations after this UTC timestamp."
-                },
-                "utce": {
-                    "type": "string",
-                    "fa_icon": "far fa-calendar-check",
-                    "description": "End UTC for PSRDB search. Returns only observations before this UTC timestamp."
-                },
-                "obs_pid": {
-                    "type": "string",
-                    "fa_icon": "far fa-address-card",
-                    "description": "Project ID for PSRDB search. Return only observations matching this Project ID."
-                },
-                "list_in": {
-                    "type": "string",
-                    "default": "None",
-                    "fa_icon": "fas fa-list-ol",
-                    "hidden": true,
-                    "description": "List of observations to process, given in a standard format.."
-                },
-                "list_out": {
-                    "type": "boolean",
-                    "hidden": true,
-                    "description": "Write the list of observations submitted in a processing_jobs.csv file.",
-                    "fa_icon": "fas fa-th-list"
-                }
-            },
-            "fa_icon": "fas fa-filter"
         },
         "workflow_options": {
             "title": "Workflow options",
@@ -126,22 +122,26 @@
             "properties": {
                 "use_edge_subints": {
                     "type": "boolean",
-                    "description": "Use first and last 8 second subints of observation archives."
+                    "description": "Use first and last 8 second subints of observation archives.",
+                    "fa_icon": "fas fa-arrows-alt-h"
                 },
                 "tos_sn": {
                     "type": "integer",
                     "default": 12,
-                    "description": "Desired ToA S/N ratio, used to calculate the nsub to use"
+                    "description": "Desired ToA S/N ratio, used to calculate the nsub to use",
+                    "fa_icon": "fas fa-signal"
                 },
                 "nchans": {
                     "type": "string",
                     "default": "1,4,16",
-                    "description": "Comma separated list of nchans to frequency scrunch the data into"
+                    "description": "Comma separated list of nchans to frequency scrunch the data into",
+                    "fa_icon": "fas fa-align-justify"
                 },
                 "npols": {
                     "type": "string",
                     "default": "1,4",
-                    "description": "Comma separated list of number of polarisations to scrunch the data into.."
+                    "description": "Comma separated list of number of polarisations to scrunch the data into..",
+                    "fa_icon": "fas fa-barcode"
                 }
             }
         },
@@ -350,10 +350,10 @@
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_output_options"
+            "$ref": "#/definitions/observation_selection"
         },
         {
-            "$ref": "#/definitions/observation_selection"
+            "$ref": "#/definitions/input_output_options"
         },
         {
             "$ref": "#/definitions/workflow_options"
