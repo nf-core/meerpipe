@@ -60,7 +60,7 @@ npols  = params.npols.split(',').collect { it.toInteger() }
 
 process MANIFEST_CONFIG_DUMP {
     // Create a json of all the parameters used in this run
-    label 'meerpipe'
+    label 'psrdb'
 
     output:
     path "manifest.json"
@@ -107,7 +107,7 @@ process MANIFEST_CONFIG_DUMP {
 
 
 process OBS_LIST {
-    label 'meerpipe'
+    label 'psrdb'
     publishDir "./", mode: 'copy', enabled: params.list_out
 
     input:
@@ -562,7 +562,7 @@ process GENERATE_IMAGE_RESULTS {
 
 
 process UPLOAD_RESULTS {
-    label 'meerpipe'
+    label 'psrdb'
 
     maxForks 1
 
