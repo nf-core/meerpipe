@@ -252,7 +252,7 @@ process PSRADD_CALIBRATE_CLEAN {
     // scratch '$JOBFS'
     // clusterOptions  { "--tmp=${(task.attempt * dur.toFloat() * 12).toInteger()}MB" }
     time   { "${task.attempt * dur.toFloat() * 0.5} s" }
-    memory { "${task.attempt**2 * dur.toFloat() * 60} MB"}
+    memory { "${task.attempt * dur.toFloat() * 60} MB"}
 
     when:
     utc != "2020-03-07-16:35:57" && utc != "2022-09-18-07:10:50" && utc != "2022-05-22-14:35:24" && utc != "2022-05-22-16:35:28"// TODO REMOVE THIS QUICK FIX
@@ -290,7 +290,7 @@ process PSRADD_CALIBRATE_CLEAN {
     fi
 
     echo "Delay correct"
-    /fred/oz005/users/mkeith/dlyfix/dlyfix -e ar ${pulsar}_${utc}_raw.scalP
+    dlyfix -e ar ${pulsar}_${utc}_raw.scalP
 
     echo "Update the RM value if available"
     rm_cat=\$(python -c "from meerpipe.data_load import RM_CAT;print(RM_CAT)")
@@ -557,7 +557,7 @@ process GENERATE_IMAGE_RESULTS {
     pam -Fp -e rawFp ${raw_archive}
 
     # Create matplotlib images and dump the results calculations into a results.json file
-    GENERATE_IMAGE_RESULTS -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -residuals ${residuals} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
+    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -residuals ${residuals} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
     """
 }
 
