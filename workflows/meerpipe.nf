@@ -250,8 +250,6 @@ process PSRADD_CALIBRATE_CLEAN {
     publishDir "${params.outdir}/${pulsar}/${utc}/calibrated", mode: 'copy', pattern: "*.ar"
     // scratch '$JOBFS'
     // clusterOptions  { "--tmp=${(task.attempt * dur.toFloat() * 12).toInteger()}MB" }
-    time   { "${task.attempt * dur.toFloat() * 0.5} s" }
-    memory { "${task.attempt * dur.toFloat() * 60} MB"}
 
     when:
     utc != "2020-03-07-16:35:57" && utc != "2022-09-18-07:10:50" && utc != "2022-05-22-14:35:24" && utc != "2022-05-22-16:35:28"// TODO REMOVE THIS QUICK FIX
@@ -316,8 +314,6 @@ process FLUXCAL {
     label 'meerpipe'
 
     publishDir "${params.outdir}/${pulsar}/${utc}/fluxcal", mode: 'copy', pattern: "*fluxcal"
-    time   { "${task.attempt * dur.toFloat() * 0.5} s" }
-    memory { "${task.attempt * dur.toFloat() * 30} MB"}
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
@@ -339,8 +335,6 @@ process DECIMATE {
     label 'meerpipe'
 
     publishDir "${params.outdir}/${pulsar}/${utc}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
-    time   { "${task.attempt * dur.toFloat() * 0.5} s" }
-    memory { "${task.attempt * dur.toFloat() * 30} MB"}
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
@@ -387,9 +381,6 @@ process DECIMATE {
 process DM_RM_CALC {
     label 'cpu'
     label 'meerpipe'
-
-    time   { "${task.attempt * dur.toFloat() * 5} s" }
-    memory { "${task.attempt**2 * dur.toFloat() * 60} MB"}
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives)
@@ -470,9 +461,6 @@ process GENERATE_TOAS {
     label 'psrchive'
 
     publishDir "${params.outdir}/${pulsar}/${utc}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
-    time   { "${task.attempt * dur.toFloat() * 1} s" }
-    memory { "${task.attempt * dur.toFloat() * 3} MB"}
-
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results)
 
@@ -527,8 +515,6 @@ process GENERATE_IMAGE_RESULTS {
     publishDir "${params.outdir}/${pulsar}/${utc}/images", mode: 'copy', pattern: "{c,t,r}*png"
     publishDir "${params.outdir}/${pulsar}/${utc}/scintillation", mode: 'copy', pattern: "*dynspec*"
     publishDir "${params.outdir}/${pulsar}/${utc}", mode: 'copy', pattern: "results.json"
-    time   { "${task.attempt * dur.toFloat() * 0.5} s" }
-    memory { "${task.attempt**2 * dur.toFloat() * 60} MB"}
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results), path(toas), path(residuals)
@@ -580,7 +566,7 @@ process UPLOAD_RESULTS {
     import logging
     from glob import glob
     from psrdb.graphql_client import GraphQLClient
-    from psrdb.utils.other import setup_logging, decode_id
+    from psrdb.utils.other import setup_logging, decode_id, get_graphql_id
     from psrdb.tables.pipeline_image import PipelineImage
     from psrdb.tables.pipeline_run import PipelineRun
     from psrdb.tables.toa import Toa
@@ -642,6 +628,45 @@ process UPLOAD_RESULTS {
     print(pipeline_run_data)
     ephemeris_id = decode_id(pipeline_run_data[0]["ephemeris"]["id"])
     template_id  = decode_id(pipeline_run_data[0]["template"]["id"])
+    for toa_file in ["${toas.join('","')}"]:
+        if "dm_corrected" in toa_file:
+            dmcorrected = True
+            # TODO don't skip this if it's useful
+            continue
+        else:
+            dmcorrected = False
+
+        # Work out if this is the minimum or maximum number of subints
+        nchan = toa_file.split("_zap.")[-1].split("ch")[0]
+        nsub = toa_file.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]
+        toas_same_nchan = glob("*_zap." + nchan + "ch*" + toa_file.split(".ar.")[1])
+        nsubs_list = []
+        for toa in toas_same_nchan:
+            print(toa)
+            nsubs_list.append(int(toa.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]))
+        minimum_nsubs = False
+        maximum_nsubs = False
+        if max(nsubs_list) == int(nsub):
+            maximum_nsubs = True
+        if min(nsubs_list) == int(nsub):
+            minimum_nsubs = True
+
+        logger.info(f"Uploading Toa file {toa_file} with maximum_nsubs={maximum_nsubs} and minimum_nsubs={minimum_nsubs}")
+        with open(toa_file, "r") as f:
+            toa_lines = f.readlines()
+            toa_response = toa_client.create(
+                ${pipe_id},
+                ephemeris_id,
+                template_id,
+                toa_lines,
+                dmcorrected,
+                minimum_nsubs,
+                maximum_nsubs,
+            )
+            if toa_response.status_code not in (200, 201):
+                logger.error("Failed to upload TOA")
+                exit(1)
+            logger.info(get_graphql_id(toa_response, "toa", logger))
 
     # Read in results JSON
     with open("results.json", "r") as f:
@@ -655,44 +680,6 @@ process UPLOAD_RESULTS {
     """
 }
 
-    // for toa_file in ["${toas.join('","')}"]:
-    //     if "dm_corrected" in toa_file:
-    //         dmcorrected = True
-    //     else:
-    //         dmcorrected = False
-
-    //     # Work out if this is the minimum or maximum number of subints
-    //     nchan = toa_file.split("_zap.")[-1].split("ch")[0]
-    //     nsub = toa_file.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]
-    //     toas_same_nchan = glob("*_zap." + nchan + "ch*" + toa_file.split(".ar.")[1])
-    //     print(nchan, nsub)
-    //     nsubs_list = []
-    //     for toa in toas_same_nchan:
-    //         print(toa)
-    //         nsubs_list.append(int(toa.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]))
-    //     minimum_nsubs = False
-    //     maximum_nsubs = False
-    //     if max(nsubs_list) == int(nsub):
-    //         maximum_nsubs = True
-    //     if min(nsubs_list) == int(nsub):
-    //         minimum_nsubs = True
-
-    //     with open(toa_file, "r") as f:
-    //         toa_lines = f.readlines()
-    //         toa_response = toa_client.create(
-    //             ${pipe_id},
-    //             ephemeris_id,
-    //             template_id,
-    //             toa_lines,
-    //             dmcorrected,
-    //             minimum_nsubs,
-    //             maximum_nsubs,
-    //         )
-    //         content = json.loads(toa_response.content)
-    //         logger.info(content)
-    //         if toa_response.status_code not in (200, 201):
-    //             logger.error("Failed to upload TOA")
-    //             exit(1)
 
 
 process GENERATE_RESIDUALS {
@@ -711,9 +698,11 @@ process GENERATE_RESIDUALS {
         for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
             for nchan in 1 4 16; do
                 # Download the toa file and fit the residuals
-                psrdb toa download J1705-1903 \$dmc \$min_or_max_sub --nchan \$nchan
+                psrdb toa download ${pulsar} \$dmc \$min_or_max_sub --nchan \$nchan
+                echo "Generating residuals for \${min_or_max_sub#--} \${nchan} \${dmc}"
                 bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh *tim ${ephemeris}
                 rm *tim
+                psrdb residual create ${pulsar} ${ephemeris} ${obs_pid} toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual
             done
         done
     done
@@ -765,7 +754,7 @@ workflow MEERPIPE {
         UPLOAD_RESULTS( GENERATE_IMAGE_RESULTS.out )
 
         // For each pulsar (not each obs), download all toas and fit residuals
-        // GENERATE_RESIDUALS( UPLOAD_RESULTS.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid, pipe_id, ephemeris.first() ] } )
+        GENERATE_RESIDUALS( UPLOAD_RESULTS.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid.first(), pipe_id, ephemeris.first() ] } )
     }
 }
 
