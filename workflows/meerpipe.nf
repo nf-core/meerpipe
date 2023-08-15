@@ -151,6 +151,7 @@ process OBS_LIST {
         project_short="${obs_pid}",
         utcs="${utcs}",
         utce="${utce}",
+        obs_type="fold",
     )
 
     # Output file
@@ -246,13 +247,9 @@ process OBS_LIST {
 process PSRADD_CALIBRATE_CLEAN {
     label 'cpu'
     label 'meerpipe'
+    // label 'scratch'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/calibrated", mode: 'copy', pattern: "*.ar"
-    // scratch '$JOBFS'
-    // clusterOptions  { "--tmp=${(task.attempt * dur.toFloat() * 12).toInteger()}MB" }
-
-    when:
-    utc != "2020-03-07-16:35:57" && utc != "2022-09-18-07:10:50" && utc != "2022-05-22-14:35:24" && utc != "2022-05-22-16:35:28"// TODO REMOVE THIS QUICK FIX
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "*.ar"
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
@@ -296,7 +293,12 @@ process PSRADD_CALIBRATE_CLEAN {
         echo "Found RM of \${rm} in the private RM catalogue"
     else
         rm=\$(psrcat -c RM ${pulsar} -X -all | tr -s ' ' | cut -d ' ' -f 1)
-        echo "Found RM of \${rm} in the ATNF catalogue"
+        if [ "\${rm}" == "*" ]; then
+            echo "No RM found in the ATNF catalogue"
+            rm=0
+        else
+            echo "Found RM of \${rm} in the ATNF catalogue"
+        fi
     fi
     pam --RM \${rm} -m ${pulsar}_${utc}_raw.ar
 
@@ -305,27 +307,11 @@ process PSRADD_CALIBRATE_CLEAN {
 
     # Get the signal to noise ratio of the cleaned archive
     SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
-    """
-}
 
-
-process FLUXCAL {
-    label 'cpu'
-    label 'meerpipe'
-
-    publishDir "${params.outdir}/${pulsar}/${utc}/fluxcal", mode: 'copy', pattern: "*fluxcal"
-
-    input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
-
-    output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_raw.ar"), path("${pulsar}_${utc}_zap.ar"), val(snr) // Replace the archives with flux calced ones
-
-    """
+    echo "Flux calibrate"
     # Create a time and polarisation scruchned profile
-    pam -Tp -e tp ${cleaned_archive}
-
-    fluxcal -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -tpfile *tp -parfile ${ephemeris}
+    pam -Tp -e tp ${pulsar}_${utc}_zap.ar
+    fluxcal -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${pulsar}_${utc}_zap.ar -rawfile ${pulsar}_${utc}_raw.ar -tpfile *tp -parfile ${ephemeris}
     """
 }
 
@@ -334,7 +320,7 @@ process DECIMATE {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
@@ -383,21 +369,27 @@ process DM_RM_CALC {
     label 'meerpipe'
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path("${pulsar}_${utc}_dm_rm_fit.txt")
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_dm_rm_fit.txt")
 
 
     // when:
     // Float.valueOf(snr) > 12.0 // If not enough signal to noise causes tempo2 to core dump
 
     script:
-    if ( Float.valueOf(snr) > 15.0 )
+    if ( Float.valueOf(snr) > 20.0 )
         """
-        echo "Calc DM with tempo2"
-        # Grab archive and template nchan
-        nchan=\$(vap -c nchan ${pulsar}_${utc}_zap.${nchans.max()}ch1p1t.ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        echo -e "\\nCreate a max channel archive\\n----------------------------------"
+        # Calculate nchan to get desired TOA S/N and make sure it is a factor of the archive channels
+        arnchan=\$(vap -c nchan ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        nchan=\$(python -c "import math; raw_nchan=math.floor( (${snr}/10.) ** 2); print(next((factor for factor in range(\$arnchan + 1, 2, -1) if \$arnchan % factor == 0 and factor < raw_nchan and factor <= 64)))")
+        pam --setnchn \${nchan} -S -p -e dmcalc ${cleaned_archive}
+        pam --setnchn \${nchan} -S    -e rmcalc ${cleaned_archive}
+
+        echo -e "\\nCreate TOAs with max channel archive\\n----------------------------------"
+        # Grab template nchan
         tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
         # Use portrait mode if template has more frequency channels
         if [ "\$tnchan" -gt "\$nchan" ]; then
@@ -405,25 +397,26 @@ process DM_RM_CALC {
         else
             port=""
         fi
-        # Create TOAs with highest chan archive
-        pat -jp \$port -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM ${pulsar}_${utc}_zap.${nchans.max()}ch1p1t.ar  > dm.tim
+        pat -jp \$port -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM ${pulsar}_${utc}_zap.dmcalc > dm.tim
+
+        echo -e "\\nCalc DM with tempo2\\n----------------------------------"
         # Remove dm derivatives
         sed '/^DM[1-9]/d' ${ephemeris} > ${ephemeris}.dm
         # Fit for DM
         tempo2 -nofit -fit DM -set START 40000 -set FINISH 99999 -f ${ephemeris}.dm -outpar ${ephemeris}.dmfit dm.tim
 
-        # Fit for RM
-        input_rm=\$(vap -c rm ${pulsar}_${utc}_zap.${nchans.max()}ch4p1t.ar | tail -n 1| tr -s ' ' | cut -d ' ' -f 2)
-        rmfit -D -R \$input_rm -m -100,100,2000 ${pulsar}_${utc}_zap.${nchans.max()}ch4p1t.ar -K /PNG > rmfit_output.txt
+        echo -e "\\nFit for RM\\n----------------------------------"
+        input_rm=\$(vap -c rm ${pulsar}_${utc}_zap.rmcalc | tail -n 1| tr -s ' ' | cut -d ' ' -f 2)
+        rmfit -D -R \$input_rm -m -100,100,2000 ${pulsar}_${utc}_zap.rmcalc -K /PNG > rmfit_output.txt
 
-        # Grab the outputs and write it to a file
-        DM=\$(grep "^DM " ${ephemeris}.dmfit | awk '{print \$2}')
-        ERR=\$(grep "^DM " ${ephemeris}.dmfit | awk '{print \$4}')
+        echo -e "\\nGrab the outputs and write it to a file\\n----------------------------------"
+        DM=\$(grep    "^DM "      ${ephemeris}.dmfit | awk '{print \$2}')
+        ERR=\$(grep   "^DM "      ${ephemeris}.dmfit | awk '{print \$4}')
         EPOCH=\$(grep "^DMEPOCH " ${ephemeris}.dmfit | awk '{print \$2}')
-        CHI2R=\$(grep "^CHI2R " ${ephemeris}.dmfit | awk '{print \$2}')
-        TRES=\$(grep "^TRES " ${ephemeris}.dmfit | awk '{print \$2}')
+        CHI2R=\$(grep "^CHI2R "   ${ephemeris}.dmfit | awk '{print \$2}')
+        TRES=\$(grep  "^TRES "    ${ephemeris}.dmfit | awk '{print \$2}')
         rm_results=\$(grep "Best RM is" rmfit_output.txt | cut -d ':' -f 2)
-        RM=\$(echo \$rm_results | cut -d '/' -f 1 | cut -d ' ' -f 1)
+        RM=\$(echo     \$rm_results | cut -d '/' -f 1 | cut -d ' ' -f 1)
         RM_ERR=\$(echo \$rm_results | cut -d '/' -f 2 | cut -d ' ' -f 2)
 
         echo "DM: \${DM}"         >> ${pulsar}_${utc}_dm_rm_fit.txt
@@ -460,16 +453,16 @@ process GENERATE_TOAS {
     label 'cpu'
     label 'psrchive'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results), path("*.tim"), path("*.residual")
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("*.tim"), path("*.residual")
 
     """
     # Loop over each DECIMATEd archive
-    for ar in ${DECIMATEd_archives.join(' ')}; do
+    for ar in ${decimated_archives.join(' ')}; do
         if [[ \$ar == *"ch4p"* ]]; then
             # Skip if it is a full Stokes archive
             continue
@@ -490,37 +483,37 @@ process GENERATE_TOAS {
 
         echo "Generating TOAs for \${ar}.tim\n----------------------------------"
         pat -jp \$port  -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM \$ar  > \${ar}.tim
-
-        echo "Correct for DM\n----------------------------------"
-        dm=\$(grep DM ${dm_results} | cut -d ' ' -f 2)
-        pam -D \$dm -e ar.dm_corrected \$ar
-
-        echo "Generating TOAs for DM corrected archive\n----------------------------------"
-        pat -jp \$port  -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM \$ar.dm_corrected  > \${ar}.dm_corrected.tim
     done
 
     # Create residuals for time largest archive
     largest_archive=\$(ls ${pulsar}_${utc}_zap.${nchans.max()}ch1p*t.ar | tail -n 1)
     bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh \${largest_archive} ${ephemeris}
-    # And largest DM corrected archive
-    bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh \${largest_archive}.dm_corrected ${ephemeris}
     """
 }
+    // DM corrected stuff
+    //     echo "Correct for DM\n----------------------------------"
+    //     dm=\$(grep DM ${dm_results} | cut -d ' ' -f 2)
+    //     pam -D \$dm -e ar.dm_corrected \$ar
+
+    //     echo "Generating TOAs for DM corrected archive\n----------------------------------"
+    //     pat -jp \$port  -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM \$ar.dm_corrected  > \${ar}.dm_corrected.tim
+    // # And largest DM corrected archive
+    // bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh \${largest_archive}.dm_corrected ${ephemeris}
 
 
 process GENERATE_IMAGE_RESULTS {
     label 'cpu'
     label 'meerpipe'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/images", mode: 'copy', pattern: "{c,t,r}*png"
-    publishDir "${params.outdir}/${pulsar}/${utc}/scintillation", mode: 'copy', pattern: "*dynspec*"
-    publishDir "${params.outdir}/${pulsar}/${utc}", mode: 'copy', pattern: "results.json"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/images", mode: 'copy', pattern: "{c,t,r}*png"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/scintillation", mode: 'copy', pattern: "*dynspec*"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "results.json"
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(DECIMATEd_archives), path(dm_results), path(toas), path(residuals)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(dm_results)
 
     output:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(toas), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
+    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
 
 
     """
@@ -530,11 +523,11 @@ process GENERATE_IMAGE_RESULTS {
         type=\$1
         file=\$2
         # Do the plots for raw file then cleaned file
-        psrplot -p flux -jFTDp -jC                -g 1024x768 -c above:l= -c above:c="Stokes I Profile (\${type})"     -D \${type}_profile_fts.png/png \$file
-        psrplot -p Scyl -jFTD  -jC                -g 1024x768 -c above:l= -c above:c="Polarisation Profile (\${type})" -D \${type}_profile_ftp.png/png \$file
-        psrplot -p freq -jTDp  -jC                -g 1024x768 -c above:l= -c above:c="Phase vs. Frequency (\${type})"  -D \${type}_phase_freq.png/png  \$file
-        psrplot -p time -jFDp  -jC                -g 1024x768 -c above:l= -c above:c="Phase vs. Time (\${type})"       -D \${type}_phase_time.png/png  \$file
-        psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -g 1024x768 -c above:l= -c above:c="Cleaned bandpass (\${type})"     -D \${type}_bandpass.png/png    \$file
+        psrplot -p flux -jFTDp -jC                          -g 1024x768 -c above:l= -c above:c="Stokes I Profile (\${type})"     -D \${type}_profile_fts.png/png \$file
+        psrplot -p Scyl -jFTD  -jC                          -g 1024x768 -c above:l= -c above:c="Polarisation Profile (\${type})" -D \${type}_profile_ftp.png/png \$file
+        psrplot -p freq -jTDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Frequency (\${type})"  -D \${type}_phase_freq.png/png  \$file
+        psrplot -p time -jFDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Time (\${type})"       -D \${type}_phase_time.png/png  \$file
+        psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -c skip=1 -g 1024x768 -c above:l= -c above:c="Cleaned bandpass (\${type})"     -D \${type}_bandpass.png/png    \$file
     done
 
     # Created flux and polarisation scrunched archive for SNR images
@@ -542,7 +535,7 @@ process GENERATE_IMAGE_RESULTS {
     pam -Fp -e rawFp ${raw_archive}
 
     # Create matplotlib images and dump the results calculations into a results.json file
-    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -residuals ${residuals} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
+    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
     """
 }
 
@@ -553,7 +546,7 @@ process UPLOAD_RESULTS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(toas), path(dat_files), path(png_files), path(dynspec_files), path(results_json)
+    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(dat_files), path(png_files), path(dynspec_files), path(results_json)
 
     output:
     tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris)
@@ -620,12 +613,56 @@ process UPLOAD_RESULTS {
             logger.error("Failed to upload image")
             exit(1)
 
+    # Read in results JSON
+    with open("results.json", "r") as f:
+        results_dict = json.load(f)
+    # Update pipeline run as completed (will update pulsarFoldResult)
+    pipeline_run_response = pipeline_run_client.update(
+        ${pipe_id},
+        "Completed",
+        results_dict=results_dict,
+    )
+    """
+}
+
+
+process UPLOAD_TOAS {
+    label 'psrdb'
+
+    maxForks 1
+
+    input:
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(toas), path(residuals)
+
+    output:
+    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris)
+
+
+    """
+    #!/usr/bin/env python
+
+    import logging
+    from glob import glob
+    from psrdb.graphql_client import GraphQLClient
+    from psrdb.utils.other import setup_logging, decode_id, get_graphql_id
+    from psrdb.tables.pipeline_image import PipelineImage
+    from psrdb.tables.pipeline_run import PipelineRun
+    from psrdb.tables.toa import Toa
+
+    logger = setup_logging(console=True, level=logging.DEBUG)
+    client = GraphQLClient("${params.psrdb_url}", False, logger)
+    toa_client            = Toa(client,   "${params.psrdb_token}")
+    pipeline_run_client   = PipelineRun(client,   "${params.psrdb_token}")
+    pipeline_run_client.set_field_names(True, False)
+    pipeline_run_client.get_dicts = True
+    pid = '${obs_pid.toLowerCase()}'
+
     # Upload TOAs
     # Grab ephemeris and template ids
     pipeline_run_data = pipeline_run_client.list(
         id=${pipe_id},
     )
-    print(pipeline_run_data)
+    logger.info(pipeline_run_data)
     ephemeris_id = decode_id(pipeline_run_data[0]["ephemeris"]["id"])
     template_id  = decode_id(pipeline_run_data[0]["template"]["id"])
     for toa_file in ["${toas.join('","')}"]:
@@ -642,7 +679,6 @@ process UPLOAD_RESULTS {
         toas_same_nchan = glob("*_zap." + nchan + "ch*" + toa_file.split(".ar.")[1])
         nsubs_list = []
         for toa in toas_same_nchan:
-            print(toa)
             nsubs_list.append(int(toa.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]))
         minimum_nsubs = False
         maximum_nsubs = False
@@ -667,16 +703,6 @@ process UPLOAD_RESULTS {
                 logger.error("Failed to upload TOA")
                 exit(1)
             logger.info(get_graphql_id(toa_response, "toa", logger))
-
-    # Read in results JSON
-    with open("results.json", "r") as f:
-        results_dict = json.load(f)
-    # Update pipeline run as completed
-    pipeline_run_response = pipeline_run_client.update(
-        ${pipe_id},
-        "Completed",
-        results_dict=results_dict,
-    )
     """
 }
 
@@ -692,18 +718,18 @@ process GENERATE_RESIDUALS {
 
     """
     # Loop over each of the TOA filters
-    # for dmc in "--dm_corrected" ""; do
-    # Don't do dm correct for now
-    for dmc in ""; do
-        for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
-            for nchan in 1 4 16; do
-                # Download the toa file and fit the residuals
-                psrdb toa download ${pulsar} \$dmc \$min_or_max_sub --nchan \$nchan
-                echo "Generating residuals for \${min_or_max_sub#--} \${nchan} \${dmc}"
-                bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh *tim ${ephemeris}
-                rm *tim
+    for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
+        for nchan in ${nchans.join(' ')}; do
+            echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
+            #
+            psrdb toa download ${pulsar} \$min_or_max_sub --nchan \$nchan
+            echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
+            bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh *tim ${ephemeris}
+            rm *tim
+            if [ -f "toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual" ]; then
+                echo -e "\\nUpload the residuals\\n--------------------------\\n"
                 psrdb residual create ${pulsar} ${ephemeris} ${obs_pid} toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual
-            done
+            fi
         done
     done
     """
@@ -734,28 +760,35 @@ workflow MEERPIPE {
     // Combine archives,flux calibrate Clean of RFI with MeerGaurd
     PSRADD_CALIBRATE_CLEAN( obs_data )
 
-    // Flux calibrate
-    FLUXCAL( PSRADD_CALIBRATE_CLEAN.out )
 
-    // Decimate into different time and freq chunnks using pam
-    DECIMATE( FLUXCAL.out )
 
     // Calculate the DM with tempo2 or pdmp
-    DM_RM_CALC( DECIMATE.out )
-
-    // Generate TOAs
-    GENERATE_TOAS( DM_RM_CALC.out )
+    DM_RM_CALC( PSRADD_CALIBRATE_CLEAN.out )
 
     // Other images using matplotlib and psrplot and make a results.json
-    GENERATE_IMAGE_RESULTS( GENERATE_TOAS.out )
+    GENERATE_IMAGE_RESULTS( DM_RM_CALC.out )
 
     // Upload images and results
     if ( params.upload ) {
         UPLOAD_RESULTS( GENERATE_IMAGE_RESULTS.out )
+    }
+
+
+
+    // Decimate into different time and freq chunnks using pam
+    DECIMATE( PSRADD_CALIBRATE_CLEAN.out )
+
+    // Generate TOAs
+    GENERATE_TOAS( DECIMATE.out )
+
+    if ( params.upload ) {
+        UPLOAD_TOAS( GENERATE_TOAS.out )
 
         // For each pulsar (not each obs), download all toas and fit residuals
-        GENERATE_RESIDUALS( UPLOAD_RESULTS.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid.first(), pipe_id, ephemeris.first() ] } )
+        GENERATE_RESIDUALS( UPLOAD_TOAS.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid.first(), pipe_id, ephemeris.first() ] } )
     }
+
+
 }
 
 /*
