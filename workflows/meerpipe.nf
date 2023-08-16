@@ -328,19 +328,23 @@ process DECIMATE {
 
     """
     for nchan in ${nchans.join(' ')}; do
-        # Calculate nsub to get desired TOA S/N
-        max_nsub=\$(python -c "import math; print(math.floor(1/\$nchan * (${snr}/${params.tos_sn}) ** 2))")
+        if ${params.use_max_nsub}; then
+            # Calculate nsub to get desired TOA S/N
+            max_nsub=\$(python -c "import math; print(math.floor(1/\$nchan * (${snr}/${params.tos_sn}) ** 2))")
 
-        input_nsub=\$(vap -c nsub ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-        if [ \$max_nsub -gt \$input_nsub ]; then
-            # Greater than input nsub so set input as max
-            max_nsub=\$input_nsub
-        fi
-        if [ \$max_nsub -eq 0 ]; then
-            # Not enough SN so only make a fully time scrunched
-            nsubs="1"
+            input_nsub=\$(vap -c nsub ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+            if [ \$max_nsub -gt \$input_nsub ]; then
+                # Greater than input nsub so set input as max
+                max_nsub=\$input_nsub
+            fi
+            if [ \$max_nsub -eq 0 ]; then
+                # Not enough SN so only make a fully time scrunched
+                nsubs="1"
+            else
+                nsubs="1 \$max_nsub"
+            fi
         else
-            nsubs="1 \$max_nsub"
+            nsubs="1"
         fi
 
         # Make a max_nsub decimation and a time scrunched decimation
@@ -773,7 +777,7 @@ workflow MEERPIPE {
 
 
 
-    // Decimate into different time and freq chunnks using pam
+    // Decimate into different time and freq chunks using pam
     DECIMATE( PSRADD_CALIBRATE_CLEAN.out )
 
     // Generate TOAs

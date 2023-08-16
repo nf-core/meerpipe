@@ -365,5 +365,11 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "use_max_nsub": {
+            "type": "boolean",
+            "default": "false"
+        }
+    }
 }
