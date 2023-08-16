@@ -369,6 +369,8 @@ process DECIMATE {
 process DM_RM_CALC {
     label 'cpu'
     label 'meerpipe'
+    time   { "${10 * task.attempt * dur.toFloat()} s" }
+    memory { "${5 * mem_calc(dur, task.attempt, params.max_memory)} GB"}
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
@@ -381,7 +383,17 @@ process DM_RM_CALC {
     // Float.valueOf(snr) > 12.0 // If not enough signal to noise causes tempo2 to core dump
 
     script:
-    if ( Float.valueOf(snr) > 20.0 )
+    if ( task.attempt > 2 )
+        """
+        echo "DM: None"     >> ${pulsar}_${utc}_dm_rm_fit.txt
+        echo "ERR: None"    >> ${pulsar}_${utc}_dm_rm_fit.txt
+        echo "EPOCH: None"  >> ${pulsar}_${utc}_dm_rm_fit.txt
+        echo "CHI2R: None"  >> ${pulsar}_${utc}_dm_rm_fit.txt
+        echo "TRES: None"   >> ${pulsar}_${utc}_dm_rm_fit.txt
+        echo "RM: None"     >> ${pulsar}_${utc}_dm_rm_fit.txt
+        echo "RM_ERR: None" >> ${pulsar}_${utc}_dm_rm_fit.txt
+        """
+    else if ( Float.valueOf(snr) > 20.0 )
         """
         echo -e "\\nCreate a max channel archive\\n----------------------------------"
         # Calculate nchan to get desired TOA S/N and make sure it is a factor of the archive channels
