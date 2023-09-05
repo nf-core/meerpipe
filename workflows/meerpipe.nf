@@ -549,12 +549,14 @@ process GENERATE_IMAGE_RESULTS {
         psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -c skip=1 -g 1024x768 -c above:l= -c above:c="Cleaned bandpass (\${type})"     -D \${type}_bandpass.png/png    \$file
     done
 
-    # Created flux and polarisation scrunched archive for SNR images
+    # Create flux and polarisation scrunched archive for SNR images
     pam -Fp -e cleanFp ${cleaned_archive}
     pam -Fp -e rawFp ${raw_archive}
+    # Create a frequency, time and polarisation scrunched file for flux calc
+    pam -FTp -e cleanFTp ${cleaned_archive}
 
     # Create matplotlib images and dump the results calculations into a results.json file
-    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -parfile ${ephemeris} -template ${template} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
+    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -cleanFTp *cleanFTp -parfile ${ephemeris} -template ${template} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
     """
 }
 
