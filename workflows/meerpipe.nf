@@ -174,6 +174,9 @@ process OBS_LIST {
                 if not os.path.exists(ephemeris):
                     # Default to using PTA ephemeris if one does not exist
                     ephemeris = f"${params.ephemerides_dir}/PTA/{pulsar}.par"
+                if not os.path.exists(ephemeris):
+                    # Default to using TPA ephemeris if one does not exist
+                    ephemeris = f"${params.ephemerides_dir}/TPA/{pulsar}.par"
             else:
                 ephemeris = "${params.ephemeris}"
             if "${params.template}" == "null":
@@ -187,6 +190,12 @@ process OBS_LIST {
                 if not os.path.exists(template):
                     # Final attempt is PTA LBAND template
                     template = f"${params.templates_dir}/PTA/LBAND/{pulsar}.std"
+                if not os.path.exists(template):
+                    # Default to using TPA template if one does not exist
+                    template = f"${params.templates_dir}/TPA/{band}/{pulsar}.std"
+                if not os.path.exists(template):
+                    # Final attempt is TPA LBAND template
+                    template = f"${params.templates_dir}/TPA/LBAND/{pulsar}.std"
             else:
                 template = "${params.template}"
 
