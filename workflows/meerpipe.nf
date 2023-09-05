@@ -55,7 +55,7 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 
 // Convert nchan and npols to lists
 nchans = params.nchans.split(',').collect { it.toInteger() }
-npols  = params.npols.split(',').collect { it.toInteger() }
+npols  = params.npols.split(',').collect  { it.toInteger() }
 
 
 process MANIFEST_CONFIG_DUMP {
@@ -111,7 +111,7 @@ process OBS_LIST {
     input:
     val utcs
     val utce
-    val pulsar
+    val pulsars
     val obs_pid
     path manifest
 
@@ -145,7 +145,7 @@ process OBS_LIST {
 
     # Query based on provided parameters
     obs_data = obs_client.list(
-        pulsar_name="${pulsar}",
+        pulsar_name=["${pulsars.split(',').join('","')}"],
         project_short="${obs_pid}",
         utcs="${utcs}",
         utce="${utce}",
@@ -377,10 +377,6 @@ process DM_RM_CALC {
 
     output:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_dm_rm_fit.txt")
-
-
-    // when:
-    // Float.valueOf(snr) > 12.0 // If not enough signal to noise causes tempo2 to core dump
 
     script:
     if ( task.attempt > 2 )
