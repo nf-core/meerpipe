@@ -152,6 +152,92 @@ process OBS_LIST {
         obs_type="fold",
     )
 
+    # Grab all the ephems and templates for each pulsar first
+    pulsar_ephem_template = {}
+    for ob in obs_data:
+        # Extract data from obs_data
+        pulsar   = ob['pulsar']['name']
+        pid_obs  = ob['project']['short']
+        band     = ob['band']
+        if pulsar in pulsar_ephem_template.keys():
+            if band in pulsar_ephem_template[pulsar].keys():
+                # Already grabbed so continue
+                continue
+        else:
+            pulsar_ephem_template[pulsar] = {}
+
+        # Grab ephermis and templates
+        if "${params.ephemeris}" == "null":
+            ephemeris = f"${params.ephemerides_dir}/{pid_obs}/{pulsar}.par"
+            if not os.path.exists(ephemeris):
+                # Default to using PTA ephemeris if one does not exist
+                ephemeris = f"${params.ephemerides_dir}/PTA/{pulsar}.par"
+            if not os.path.exists(ephemeris):
+                # Default to using TPA ephemeris if one does not exist
+                ephemeris = f"${params.ephemerides_dir}/TPA/{pulsar}.par"
+            if not os.path.exists(ephemeris):
+                # Default to using RelBin ephemeris if one does not exist
+                ephemeris = f"${params.ephemerides_dir}/RelBin/{pulsar}.par"
+            if not os.path.exists(ephemeris):
+                # Default to using PTUSE ephemeris if one does not exist
+                ephemeris = f"${params.ephemerides_dir}/PTUSE/{pulsar}.par"
+        else:
+            ephemeris = "${params.ephemeris}"
+        if "${params.template}" == "null":
+            template = f"${params.templates_dir}/{pid_obs}/{band}/{pulsar}.std"
+            if not os.path.exists(template):
+                # Try LBAND template
+                template = f"${params.templates_dir}/{pid_obs}/LBAND/{pulsar}.std"
+            if not os.path.exists(template):
+                # Default to using PTA template if one does not exist
+                template = f"${params.templates_dir}/PTA/{band}/{pulsar}.std"
+            if not os.path.exists(template):
+                # Final attempt is PTA LBAND template
+                template = f"${params.templates_dir}/PTA/LBAND/{pulsar}.std"
+            if not os.path.exists(template):
+                # Default to using TPA template if one does not exist
+                template = f"${params.templates_dir}/TPA/{band}/{pulsar}.std"
+            if not os.path.exists(template):
+                # Final attempt is TPA LBAND template
+                template = f"${params.templates_dir}/TPA/LBAND/{pulsar}.std"
+            if not os.path.exists(template):
+                # Default to using RelBin template if one does not exist
+                template = f"${params.templates_dir}/RelBin/{band}/{pulsar}.std"
+            if not os.path.exists(template):
+                # Final attempt is RelBin LBAND template
+                template = f"${params.templates_dir}/RelBin/LBAND/{pulsar}.std"
+        else:
+            template = "${params.template}"
+        ephem_template = {
+            "ephemeris": ephemeris,
+            "template": template,
+        }
+        if "${params.upload}" == "true":
+            # Get or create template
+            template_project = template.split("/")[-3]
+            template_band = template.split("/")[-2]
+            template_response = template_client.create(
+                pulsar,
+                template_band,
+                template,
+                project_short=template_project,
+            )
+            logger.debug(template_response)
+            ephem_template["template_id"] = get_rest_api_id(template_response, logging.getLogger(__name__))
+            # Get or create ephemeris
+            ephemeris_project = ephemeris.split("/")[-2]
+            ephemeris_response = ephemeris_client.create(
+                pulsar,
+                ephemeris,
+                project_short=ephemeris_project,
+                comment="",
+            )
+            logger.debug(ephemeris_response)
+            ephem_template["ephemeris_id"] = get_graphql_id(ephemeris_response, "ephemeris", logging.getLogger(__name__))
+        pulsar_ephem_template[pulsar][band] = ephem_template
+
+
+
     # Output file
     with open("processing_jobs.csv", "w") as out_file:
         for ob in obs_data:
@@ -167,76 +253,15 @@ process OBS_LIST {
             band     = ob['band']
             duration = ob['duration']
             cal_loc  = ob['calibration']['location']
-
-            # Grab ephermis and templates
-            if "${params.ephemeris}" == "null":
-                ephemeris = f"${params.ephemerides_dir}/{pid_obs}/{pulsar}.par"
-                if not os.path.exists(ephemeris):
-                    # Default to using PTA ephemeris if one does not exist
-                    ephemeris = f"${params.ephemerides_dir}/PTA/{pulsar}.par"
-                if not os.path.exists(ephemeris):
-                    # Default to using TPA ephemeris if one does not exist
-                    ephemeris = f"${params.ephemerides_dir}/TPA/{pulsar}.par"
-                if not os.path.exists(ephemeris):
-                    # Default to using RelBin ephemeris if one does not exist
-                    ephemeris = f"${params.ephemerides_dir}/RelBin/{pulsar}.par"
-                if not os.path.exists(ephemeris):
-                    # Default to using PTUSE ephemeris if one does not exist
-                    ephemeris = f"${params.ephemerides_dir}/PTUSE/{pulsar}.par"
-            else:
-                ephemeris = "${params.ephemeris}"
-            if "${params.template}" == "null":
-                template = f"${params.templates_dir}/{pid_obs}/{band}/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Try LBAND template
-                    template = f"${params.templates_dir}/{pid_obs}/LBAND/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Default to using PTA template if one does not exist
-                    template = f"${params.templates_dir}/PTA/{band}/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Final attempt is PTA LBAND template
-                    template = f"${params.templates_dir}/PTA/LBAND/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Default to using TPA template if one does not exist
-                    template = f"${params.templates_dir}/TPA/{band}/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Final attempt is TPA LBAND template
-                    template = f"${params.templates_dir}/TPA/LBAND/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Default to using RelBin template if one does not exist
-                    template = f"${params.templates_dir}/RelBin/{band}/{pulsar}.std"
-                if not os.path.exists(template):
-                    # Final attempt is RelBin LBAND template
-                    template = f"${params.templates_dir}/RelBin/LBAND/{pulsar}.std"
-            else:
-                template = "${params.template}"
+            ephemeris = pulsar_ephem_template[pulsar][band]["ephemeris"]
+            template  = pulsar_ephem_template[pulsar][band]["template"]
 
             logger.info(f"Setting up ID: {obs_id} pulsar: {pulsar} band: {band} template: {template} ephemeris: {ephemeris}")
 
             # Set job as running
             if "${params.upload}" == "true":
-                # Get or create template
-                template_project = template.split("/")[-3]
-                template_band = template.split("/")[-2]
-                template_response = template_client.create(
-                    pulsar,
-                    template_band,
-                    template,
-                    project_short=template_project,
-                )
-                logger.debug(template_response)
-                template_id = get_rest_api_id(template_response, logging.getLogger(__name__))
-                # Get or create ephemeris
-                ephemeris_project = ephemeris.split("/")[-2]
-                ephemeris_response = ephemeris_client.create(
-                    pulsar,
-                    ephemeris,
-                    project_short=ephemeris_project,
-                    comment="",
-                )
-                logger.debug(ephemeris_response)
-                ephemeris_id = get_graphql_id(ephemeris_response, "ephemeris", logging.getLogger(__name__))
-
+                ephemeris_id = pulsar_ephem_template[pulsar][band]["ephemeris_id"]
+                template_id  = pulsar_ephem_template[pulsar][band]["template_id"]
                 with open("${manifest}", 'r') as file:
                     # Load the JSON data
                     pipeline_config = json.load(file)
