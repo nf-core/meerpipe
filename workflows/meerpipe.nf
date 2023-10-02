@@ -291,9 +291,9 @@ process OBS_LIST {
 process PSRADD_CALIBRATE_CLEAN {
     label 'cpu'
     label 'meerpipe'
-    // label 'scratch'
+    label 'scratch'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "*.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "*zap.ar"
 
     input:
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
