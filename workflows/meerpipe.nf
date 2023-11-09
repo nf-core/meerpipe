@@ -346,8 +346,18 @@ process PSRADD_CALIBRATE_CLEAN {
     fi
     pam --RM \${rm} -m ${pulsar}_${utc}_raw.ar
 
+    echo "Check if you need to change the template bins"
+    obs_nbin=\$(vap -c nbin ${pulsar}_${utc}_raw.raw | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+    std_nbin=\$(vap -c nbin ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+    if [ "\$obs_nbin" == "\$std_nbin"]; then
+        std_template=${template}
+    else
+        echo "Making a new template with right number of bins"
+        pam -b \$((std_nbin / obs_nbin)) -e new_std ${template}
+        std_template=*new_std
+    fi
     echo "Clean the archive"
-    clean_archive.py -a ${pulsar}_${utc}_raw.ar -T ${template} -o ${pulsar}_${utc}_zap.ar
+    clean_archive.py -a ${pulsar}_${utc}_raw.ar -T \${std_template} -o ${pulsar}_${utc}_zap.ar
 
     # Get the signal to noise ratio of the cleaned archive
     SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
@@ -779,7 +789,6 @@ process GENERATE_RESIDUALS {
     for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
         for nchan in ${nchans.join(' ')}; do
             echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
-            #
             psrdb toa download ${pulsar} \$min_or_max_sub --nchan \$nchan
             echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
             bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh *tim ${ephemeris}
