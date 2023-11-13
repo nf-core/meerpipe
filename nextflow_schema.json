@@ -26,22 +26,15 @@
                     "fa_icon": "far fa-calendar-check",
                     "description": "End UTC for PSRDB search. Returns only observations before this UTC timestamp."
                 },
-                "obs_pid": {
+                "project": {
                     "type": "string",
                     "fa_icon": "far fa-address-card",
-                    "description": "Project ID for PSRDB search. Return only observations matching this Project ID."
+                    "description": "Project short name (e.g. PTA) for PSRDB search. Return only observations matching this Project short code."
                 },
-                "list_in": {
+                "obs_csv": {
                     "type": "string",
                     "fa_icon": "fas fa-list-ol",
-                    "hidden": true,
-                    "description": "List of observations to process, given in a standard format.."
-                },
-                "list_out": {
-                    "type": "boolean",
-                    "hidden": true,
-                    "description": "Write the list of observations submitted in a processing_jobs.csv file.",
-                    "fa_icon": "fas fa-th-list"
+                    "description": "Path to CSV file containing the observations to process in the format described in the documentation"
                 }
             },
             "fa_icon": "fas fa-filter"
@@ -361,8 +354,7 @@
     ],
     "properties": {
         "use_max_nsub": {
-            "type": "boolean",
-            "default": "false"
+            "type": "boolean"
         }
     }
 }
