@@ -135,11 +135,11 @@ process OBS_LIST {
 
     # PSRDB setup
     logger = setup_logging(level=logging.DEBUG)
-    client = GraphQLClient("${params.psrdb_url}", False, logger=logger)
-    obs_client       = Observation(client, "${params.psrdb_token}")
-    pipe_run_client  = PipelineRun(client, "${params.psrdb_token}")
-    template_client  = Template(   client, "${params.psrdb_token}")
-    ephemeris_client = Ephemeris(  client, "${params.psrdb_token}")
+    client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger=logger)
+    obs_client       = Observation(client)
+    pipe_run_client  = PipelineRun(client)
+    template_client  = Template(client)
+    ephemeris_client = Ephemeris(client)
     obs_client.get_dicts = True
     obs_client.set_use_pagination(True)
 
@@ -633,11 +633,10 @@ process UPLOAD_RESULTS {
     from psrdb.tables.toa import Toa
 
     logger = setup_logging(console=True, level=logging.DEBUG)
-    client = GraphQLClient("${params.psrdb_url}", False, logger)
-    pipeline_image_client = PipelineImage(client, "${params.psrdb_token}")
-    toa_client            = Toa(client,   "${params.psrdb_token}")
-    pipeline_run_client   = PipelineRun(client,   "${params.psrdb_token}")
-    pipeline_run_client.set_field_names(True, False)
+    client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger)
+    pipeline_image_client = PipelineImage(client)
+    toa_client            = Toa(client)
+    pipeline_run_client   = PipelineRun(client)
     pipeline_run_client.get_dicts = True
     pid = '${obs_pid.toLowerCase()}'
 
@@ -718,10 +717,9 @@ process UPLOAD_TOAS {
     from psrdb.tables.toa import Toa
 
     logger = setup_logging(console=True, level=logging.DEBUG)
-    client = GraphQLClient("${params.psrdb_url}", False, logger)
-    toa_client            = Toa(client,   "${params.psrdb_token}")
-    pipeline_run_client   = PipelineRun(client,   "${params.psrdb_token}")
-    pipeline_run_client.set_field_names(True, False)
+    client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger)
+    toa_client            = Toa(client)
+    pipeline_run_client   = PipelineRun(client)
     pipeline_run_client.get_dicts = True
     pid = '${obs_pid.toLowerCase()}'
 
