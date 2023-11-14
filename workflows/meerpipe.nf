@@ -78,7 +78,8 @@ process MANIFEST_CONFIG_DUMP {
         "configuration": {
             "utcs": "${params.utcs}",
             "utce": "${params.utce}",
-            "obs_pid": "${params.obs_pid}",
+            "project": "${params.project}",
+            "obs_csv": "${params.obs_csv}",
             "pulsar": "${params.pulsar}",
             "use_edge_subints": "${params.use_edge_subints}",
             "tos_sn": "${params.tos_sn}",
@@ -106,7 +107,6 @@ process MANIFEST_CONFIG_DUMP {
 
 process OBS_LIST {
     label 'psrdb'
-    publishDir "./", mode: 'copy', enabled: params.list_out
 
     input:
     val utcs
@@ -125,13 +125,14 @@ process OBS_LIST {
     import json
     import base64
     import logging
+    import pandas as pd
     from datetime import datetime
     from psrdb.tables.observation import Observation
     from psrdb.tables.pipeline_run import PipelineRun
     from psrdb.tables.template import Template
     from psrdb.tables.ephemeris import Ephemeris
     from psrdb.graphql_client import GraphQLClient
-    from psrdb.utils.other import setup_logging, get_rest_api_id, get_graphql_id
+    from psrdb.utils.other import setup_logging, get_rest_api_id, get_graphql_id, decode_id
 
     # PSRDB setup
     logger = setup_logging(level=logging.DEBUG)
@@ -143,22 +144,39 @@ process OBS_LIST {
     obs_client.get_dicts = True
     obs_client.set_use_pagination(True)
 
-    # Query based on provided parameters
-    obs_data = obs_client.list(
-        pulsar_name=["${pulsars.split(',').join('","')}"],
-        project_short="${obs_pid}",
-        utcs="${utcs}",
-        utce="${utce}",
-        obs_type="fold",
-    )
+    if "${params.obs_csv}" == "null":
+        # Query based on provided parameters
+        obs_data = obs_client.list(
+            pulsar_name=["${pulsars.split(',').join('","')}"],
+            project_short="${obs_pid}",
+            utcs="${utcs}",
+            utce="${utce}",
+            obs_type="fold",
+        )
+        obs_df = pd.DataFrame(columns=["Obs ID","Pulsar Jname","UTC Start","Project Short Name","Beam #","Observing Band","Duration (s)","Calibration Location"])
+        for obs in obs_data:
+            obs_df = obs_df.append(pd.Series([
+                    decode_id(obs['id']),
+                    obs['pulsar']['name'],
+                    datetime.strptime(obs['utcStart'], '%Y-%m-%dT%H:%M:%S+00:00').strftime('%Y-%m-%d-%H:%M:%S'),
+                    obs['project']['short'],
+                    obs['beam'],
+                    obs['band'],
+                    obs['duration'],
+                    obs['calibration']['location'],
+                ], index=obs_df.columns), ignore_index=True)
+    else:
+        # Read in obs from csv
+        obs_df = pd.read_csv("${params.obs_csv}")
+
 
     # Grab all the ephems and templates for each pulsar first
     pulsar_ephem_template = {}
-    for ob in obs_data:
-        # Extract data from obs_data
-        pulsar   = ob['pulsar']['name']
-        pid_obs  = ob['project']['short']
-        band     = ob['band']
+    for _, obs in obs_df.iterrows():
+        # Extract data from obs_df
+        pulsar   = obs['Pulsar Jname']
+        project  = obs['Project Short Name']
+        band     = obs['Observing Band']
         if pulsar in pulsar_ephem_template.keys():
             if band in pulsar_ephem_template[pulsar].keys():
                 # Already grabbed so continue
@@ -168,7 +186,7 @@ process OBS_LIST {
 
         # Grab ephermis and templates
         if "${params.ephemeris}" == "null":
-            ephemeris = f"${params.ephemerides_dir}/{pid_obs}/{pulsar}.par"
+            ephemeris = f"${params.ephemerides_dir}/{project}/{pulsar}.par"
             if not os.path.exists(ephemeris):
                 # Default to using PTA ephemeris if one does not exist
                 ephemeris = f"${params.ephemerides_dir}/PTA/{pulsar}.par"
@@ -184,10 +202,10 @@ process OBS_LIST {
         else:
             ephemeris = "${params.ephemeris}"
         if "${params.template}" == "null":
-            template = f"${params.templates_dir}/{pid_obs}/{band}/{pulsar}.std"
+            template = f"${params.templates_dir}/{project}/{band}/{pulsar}.std"
             if not os.path.exists(template):
                 # Try LBAND template
-                template = f"${params.templates_dir}/{pid_obs}/LBAND/{pulsar}.std"
+                template = f"${params.templates_dir}/{project}/LBAND/{pulsar}.std"
             if not os.path.exists(template):
                 # Default to using PTA template if one does not exist
                 template = f"${params.templates_dir}/PTA/{band}/{pulsar}.std"
@@ -238,52 +256,46 @@ process OBS_LIST {
 
 
 
-    # Output file
-    with open("processing_jobs.csv", "w") as out_file:
-        for ob in obs_data:
-            print(ob)
-            # Extract data from obs_data
-            pulsar   = ob['pulsar']['name']
-            obs_id   = int(base64.b64decode(ob['id']).decode("utf-8").split(":")[1])
-            utc_obs  = datetime.strptime(ob['utcStart'], '%Y-%m-%dT%H:%M:%S+00:00')
-            utc_obs  = "%s-%s" % (utc_obs.date(), utc_obs.time())
-            pid_obs  = ob['project']['short']
-            pid_code = ob['project']['code']
-            beam     = ob['beam']
-            band     = ob['band']
-            duration = ob['duration']
-            cal_loc  = ob['calibration']['location']
-            ephemeris = pulsar_ephem_template[pulsar][band]["ephemeris"]
-            template  = pulsar_ephem_template[pulsar][band]["template"]
+    # Add ephemeris and template to df and create the pipeline run object
+    obs_df['pipe_id'] = ''
+    obs_df['ephemeris'] = ''
+    obs_df['template'] = ''
+    for index, obs in obs_df.iterrows():
+        ephemeris = pulsar_ephem_template[pulsar][band]["ephemeris"]
+        template  = pulsar_ephem_template[pulsar][band]["template"]
 
-            logger.info(f"Setting up ID: {obs_id} pulsar: {pulsar} band: {band} template: {template} ephemeris: {ephemeris}")
+        logger.info(f"Setting up ID: {obs['Obs ID']} pulsar: {obs['Pulsar Jname']} band: {obs['Observing Band']} template: {template} ephemeris: {ephemeris}")
 
-            # Set job as running
-            if "${params.upload}" == "true":
-                ephemeris_id = pulsar_ephem_template[pulsar][band]["ephemeris_id"]
-                template_id  = pulsar_ephem_template[pulsar][band]["template_id"]
-                with open("${manifest}", 'r') as file:
-                    # Load the JSON data
-                    pipeline_config = json.load(file)
+        # Set job as running
+        if "${params.upload}" == "true":
+            ephemeris_id = pulsar_ephem_template[pulsar][band]["ephemeris_id"]
+            template_id  = pulsar_ephem_template[pulsar][band]["template_id"]
+            with open("${manifest}", 'r') as file:
+                # Load the JSON data
+                pipeline_config = json.load(file)
 
-                pipe_run_data = pipe_run_client.create(
-                    obs_id,
-                    ephemeris_id,
-                    template_id,
-                    "${params.manifest.name}",
-                    "${params.manifest.description}",
-                    "${params.manifest.version}",
-                    "Running",
-                    "${params.outdir}",
-                    pipeline_config,
-                )
-                pipe_id = get_graphql_id(pipe_run_data, "pipeline_run", logging.getLogger(__name__))
-            else:
-                # No uploading so don't make a processing item
-                pipe_id = None
+            pipe_run_data = pipe_run_client.create(
+                obs['Obs ID'],
+                ephemeris_id,
+                template_id,
+                "${params.manifest.name}",
+                "${params.manifest.description}",
+                "${params.manifest.version}",
+                "Running",
+                "${params.outdir}",
+                pipeline_config,
+            )
+            pipe_id = get_graphql_id(pipe_run_data, "pipeline_run", logging.getLogger(__name__))
+        else:
+            # No uploading so don't make a processing item
+            pipe_id = None
+        obs_df.at[index, 'pipe_id']   = pipe_id
+        obs_df.at[index, 'ephemeris'] = ephemeris
+        obs_df.at[index, 'template']  = template
 
-            # Write out results
-            out_file.write(f"{pulsar},{utc_obs},{pid_obs},{beam},{band},{duration},{cal_loc},{pipe_id},{ephemeris},{template}\\n")
+    # Write out results
+    obs_df.drop('Obs ID', axis=1, inplace=True)
+    obs_df.to_csv("processing_jobs.csv", header=False, index=False)
     """
 }
 
@@ -319,7 +331,7 @@ process PSRADD_CALIBRATE_CLEAN {
     psradd -E ${ephemeris} -o ${pulsar}_${utc}_raw.raw \${archives}
 
     echo "Calibrate the polarisation of the archive"
-    if [ "${cal_loc}" == "None" ]; then
+    if [ "${cal_loc}" == "" ]; then
         # The archives have already be calibrated so just update the headers
         pac -XP -O ./ -e scalP ${pulsar}_${utc}_raw.raw
     else
@@ -638,7 +650,6 @@ process UPLOAD_RESULTS {
     toa_client            = Toa(client)
     pipeline_run_client   = PipelineRun(client)
     pipeline_run_client.get_dicts = True
-    pid = '${obs_pid.toLowerCase()}'
 
     image_data = []
     # grab toa files
@@ -807,20 +818,14 @@ workflow MEERPIPE {
     MANIFEST_CONFIG_DUMP()
 
     // Use PSRDB to work out which obs to process
-    if ( params.list_in ) {
-        // Check contents of list_in
-        obs_data = Channel.fromPath( params.list_in ).splitCsv()
-    }
-    else {
-        OBS_LIST(
-            params.utcs,
-            params.utce,
-            params.pulsar,
-            params.obs_pid,
-            MANIFEST_CONFIG_DUMP.out,
-        )
-        obs_data = OBS_LIST.out.splitCsv()
-    }
+    OBS_LIST(
+        params.utcs,
+        params.utce,
+        params.pulsar,
+        params.project,
+        MANIFEST_CONFIG_DUMP.out,
+    )
+    obs_data = OBS_LIST.out.splitCsv()
 
     // Combine archives,flux calibrate Clean of RFI with MeerGaurd
     PSRADD_CALIBRATE_CLEAN( obs_data )
