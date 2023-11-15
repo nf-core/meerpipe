@@ -155,16 +155,25 @@ process OBS_LIST {
         )
         obs_df = pd.DataFrame(columns=["Obs ID","Pulsar Jname","UTC Start","Project Short Name","Beam #","Observing Band","Duration (s)","Calibration Location"])
         for obs in obs_data:
-            obs_df = obs_df.append(pd.Series([
-                    decode_id(obs['id']),
-                    obs['pulsar']['name'],
-                    datetime.strptime(obs['utcStart'], '%Y-%m-%dT%H:%M:%S+00:00').strftime('%Y-%m-%d-%H:%M:%S'),
-                    obs['project']['short'],
-                    obs['beam'],
-                    obs['band'],
-                    obs['duration'],
-                    obs['calibration']['location'],
-                ], index=obs_df.columns), ignore_index=True)
+            obs_df = pd.concat(
+                [
+                    obs_df,
+                    pd.Series({
+                        "Obs ID": decode_id(obs['id']),
+                        "Pulsar Jname": obs['pulsar']['name'],
+                        "UTC Start": datetime.strptime(
+                            obs['utcStart'],
+                            '%Y-%m-%dT%H:%M:%S+00:00',
+                        ).strftime('%Y-%m-%d-%H:%M:%S'),
+                        "Project Short Name": obs['project']['short'],
+                        "Beam #": obs['beam'],
+                        "Observing Band": obs['band'],
+                        "Duration (s)": obs['duration'],
+                        "Calibration Location": obs['calibration']['location'],
+                    }).to_frame().T,
+                ],
+                ignore_index=True
+            )
     else:
         # Read in obs from csv
         obs_df = pd.read_csv("${params.obs_csv}")
