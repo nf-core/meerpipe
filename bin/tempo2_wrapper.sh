@@ -2,8 +2,8 @@
 
 # Check if at least one argument is provided
 if [ $# -lt 1 ]; then
-  echo "Usage: tempo2_wrapper.sh <arg1> [arg2] [arg3]"
-  exit 1
+    echo "Usage: tempo2_wrapper.sh <arg1> [arg2] [arg3]"
+    exit 1
 fi
 
 # Access and use the input arguments
