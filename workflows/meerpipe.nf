@@ -565,7 +565,7 @@ process GENERATE_TOAS {
 
     # Create residuals for time largest archive
     largest_archive=\$(ls ${pulsar}_${utc}_zap.${nchans.max()}ch1p*t.ar | tail -n 1)
-    bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh \${largest_archive} ${ephemeris}
+    tempo2_wrapper.sh \${largest_archive} ${ephemeris}
     """
 }
     // DM corrected stuff
@@ -576,7 +576,7 @@ process GENERATE_TOAS {
     //     echo "Generating TOAs for DM corrected archive\n----------------------------------"
     //     pat -jp \$port  -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM \$ar.dm_corrected  > \${ar}.dm_corrected.tim
     // # And largest DM corrected archive
-    // bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh \${largest_archive}.dm_corrected ${ephemeris}
+    // tempo2_wrapper.sh \${largest_archive}.dm_corrected ${ephemeris}
 
 
 process GENERATE_IMAGE_RESULTS {
@@ -800,7 +800,7 @@ process GENERATE_RESIDUALS {
             echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
             psrdb toa download ${pulsar} \$min_or_max_sub --nchan \$nchan
             echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
-            bash /fred/oz005/users/nswainst/code/meerpipe/tempo2_wrapper.sh *tim ${ephemeris}
+            tempo2_wrapper.sh *tim ${ephemeris}
             rm *tim
             if [ -f "toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual" ]; then
                 echo -e "\\nUpload the residuals\\n--------------------------\\n"
