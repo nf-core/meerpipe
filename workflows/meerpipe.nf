@@ -786,7 +786,7 @@ process UPLOAD_TOAS {
 
 
 process GENERATE_RESIDUALS {
-    label 'meerpipe'
+    label 'psrdb_tempo2'
 
     maxForks 1
 
