@@ -384,6 +384,21 @@ process PSRADD_CALIBRATE_CLEAN {
     """
 }
 
+process GRAB_PREVIOUS_ARCHIVE_SNR {
+    label 'cpu'
+    label 'meerpipe'
+
+    input:
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
+
+    output:
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), env(SNR)
+
+    """
+    SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
+    """
+}
+
 // Info required for completion email and summary
 def multiqc_report = []
 
@@ -403,16 +418,27 @@ workflow MEERPIPE {
     )
     obs_data = OBS_LIST.out.splitCsv()
 
-    // Combine archives,flux calibrate Clean of RFI with MeerGaurd
-    PSRADD_CALIBRATE_CLEAN( obs_data )
+    if ( params.use_prev_ar ) {
+        GRAB_PREVIOUS_ARCHIVE_SNR( obs_data )
 
-    // Perform the results and imaging subworkflow which does DM, RM and flux desnsity calculations, creates images and uplaods them
-    GENERATE_RESULTS_IMAGES( PSRADD_CALIBRATE_CLEAN.out )
+        files_and_meta = GRAB_PREVIOUS_ARCHIVE_SNR.out.map {
+            pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, snr ->
+            [pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, "dummy_file.ar", "${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar", snr]
+        }
+    } else {
+        // Combine archives,flux calibrate Clean of RFI with MeerGaurd
+        PSRADD_CALIBRATE_CLEAN( obs_data )
+
+        files_and_meta = PSRADD_CALIBRATE_CLEAN.out
+
+        // Perform the results and imaging subworkflow which does DM, RM and flux desnsity calculations, creates images and uplaods them
+        GENERATE_RESULTS_IMAGES( files_and_meta )
+    }
 
     // Perform the timing subworkflow which does decimation, and creates toas and residuals
     DECIMATE_TOA_RESIDUALS(
         // Only send it the paths and vals it needs
-        PSRADD_CALIBRATE_CLEAN.out.map {
+        files_and_meta.map {
             pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, raw_archive, cleaned_archive, snr ->
             [ pulsar, utc, obs_pid, beam, dur, pipe_id, ephemeris, template, cleaned_archive, snr ]
         }
