@@ -1,5 +1,8 @@
 
 
+// Convert nchan and npols to lists
+nchans = params.nchans.split(',').collect { it.toInteger() }
+npols  = params.npols.split(',').collect  { it.toInteger() }
 
 process DECIMATE {
     label 'cpu'
@@ -8,10 +11,10 @@ process DECIMATE {
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(dur), val(pipe_id), path(ephemeris), path(template), path(cleaned_archive), val(snr)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_zap.*.ar")
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(dur), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_zap.*.ar")
 
     """
     for nchan in ${nchans.join(' ')}; do
@@ -61,10 +64,10 @@ process GENERATE_TOAS {
 
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(decimated_archives)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(dur), val(pipe_id), path(ephemeris), path(template), path(decimated_archives)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("*.tim"), path("*.residual")
+    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path("*.tim"), path("*.residual")
 
     """
     # Loop over each DECIMATEd archive
@@ -114,10 +117,10 @@ process UPLOAD_TOAS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(toas), path(residuals)
+    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(toas), path(residuals)
 
     output:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris)
+    tuple val(pulsar), val(obs_pid), path(ephemeris)
 
 
     """
@@ -195,7 +198,7 @@ process GENERATE_RESIDUALS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris)
+    tuple val(pulsar), val(obs_pid), path(ephemeris)
 
     """
     # Loop over each of the TOA filters
@@ -217,7 +220,7 @@ process GENERATE_RESIDUALS {
 
 workflow DECIMATE_TOA_RESIDUALS {
     take:
-        files_and_meta // channel: /path/to/samplesheet.csv
+        files_and_meta // channel
 
     main:
         // Decimate into different time and freq chunks using pam
@@ -230,6 +233,6 @@ workflow DECIMATE_TOA_RESIDUALS {
             UPLOAD_TOAS( GENERATE_TOAS.out )
 
             // For each pulsar (not each obs), download all toas and fit residuals
-            GENERATE_RESIDUALS( UPLOAD_TOAS.out.groupTuple().map { pulsar, obs_pid, pipe_id, ephemeris -> [ pulsar, obs_pid.first(), pipe_id, ephemeris.first() ] } )
+            GENERATE_RESIDUALS( UPLOAD_TOAS.out.groupTuple().map { pulsar, obs_pid, ephemeris -> [ pulsar, obs_pid.first(), ephemeris.first() ] } )
         }
 }

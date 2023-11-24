@@ -3,14 +3,12 @@
 process DM_RM_CALC {
     label 'cpu'
     label 'meerpipe'
-    time   { "${10 * task.attempt * dur.toFloat()} s" }
-    memory { "${5 * mem_calc(dur, task.attempt, params.max_memory)} GB"}
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_dm_rm_fit.txt")
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_dm_rm_fit.txt")
 
     script:
     if ( task.attempt > 2 )
@@ -101,10 +99,10 @@ process GENERATE_IMAGE_RESULTS {
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "results.json"
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(dm_results)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(dm_results)
 
     output:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
+    tuple val(pulsar), val(pipe_id), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
 
 
     """
@@ -139,11 +137,7 @@ process UPLOAD_RESULTS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(dat_files), path(png_files), path(dynspec_files), path(results_json)
-
-    output:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris)
-
+    tuple val(pulsar), val(pipe_id), path(dat_files), path(png_files), path(dynspec_files), path(results_json)
 
     """
     #!/usr/bin/env python
@@ -219,7 +213,7 @@ process UPLOAD_RESULTS {
 
 workflow GENERATE_RESULTS_IMAGES {
     take:
-        files_and_meta // channel: /path/to/samplesheet.csv
+        files_and_meta // channel
 
     main:
         // Calculate the DM with tempo2 or pdmp

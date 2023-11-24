@@ -51,12 +51,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Parse inputs
-
-// Convert nchan and npols to lists
-nchans = params.nchans.split(',').collect { it.toInteger() }
-npols  = params.npols.split(',').collect  { it.toInteger() }
-
 
 process MANIFEST_CONFIG_DUMP {
     // Create a json of all the parameters used in this run
@@ -320,7 +314,7 @@ process PSRADD_CALIBRATE_CLEAN {
     tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_raw.ar"), path("${pulsar}_${utc}_zap.ar"), env(SNR)
+    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_raw.ar"), path("${pulsar}_${utc}_zap.ar"), env(SNR)
 
     """
     if ${params.use_edge_subints}; then
@@ -412,9 +406,17 @@ workflow MEERPIPE {
     // Combine archives,flux calibrate Clean of RFI with MeerGaurd
     PSRADD_CALIBRATE_CLEAN( obs_data )
 
+    // Perform the results and imaging subworkflow which does DM, RM and flux desnsity calculations, creates images and uplaods them
     GENERATE_RESULTS_IMAGES( PSRADD_CALIBRATE_CLEAN.out )
 
-    DECIMATE_TOA_RESIDUALS( PSRADD_CALIBRATE_CLEAN.out )
+    // Perform the timing subworkflow which does decimation, and creates toas and residuals
+    DECIMATE_TOA_RESIDUALS(
+        // Only send it the paths and vals it needs
+        PSRADD_CALIBRATE_CLEAN.out.map {
+            pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, raw_archive, cleaned_archive, snr ->
+            [ pulsar, utc, obs_pid, beam, dur, pipe_id, ephemeris, template, cleaned_archive, snr ]
+        }
+    )
 }
 
 /*
