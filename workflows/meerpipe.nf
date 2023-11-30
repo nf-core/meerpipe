@@ -106,7 +106,7 @@ process OBS_LIST {
     val utcs
     val utce
     val pulsars
-    val obs_pid
+    val project_short
     path manifest
 
     output:
@@ -121,12 +121,14 @@ process OBS_LIST {
     import logging
     import pandas as pd
     from datetime import datetime
+
     from psrdb.tables.observation import Observation
     from psrdb.tables.pipeline_run import PipelineRun
     from psrdb.tables.template import Template
     from psrdb.tables.ephemeris import Ephemeris
     from psrdb.graphql_client import GraphQLClient
     from psrdb.utils.other import setup_logging, get_rest_api_id, get_graphql_id, decode_id
+    from ephem_template.python_grabber import grab_ephemeris, grab_template
 
     # PSRDB setup
     logger = setup_logging(level=logging.DEBUG)
@@ -142,7 +144,7 @@ process OBS_LIST {
         # Query based on provided parameters
         obs_data = obs_client.list(
             pulsar_name=["${pulsars.split(',').join('","')}"],
-            project_short="${obs_pid}",
+            project_short="${project_short}",
             utcs="${utcs}",
             utce="${utce}",
             obs_type="fold",
@@ -189,44 +191,11 @@ process OBS_LIST {
 
         # Grab ephermis and templates
         if "${params.ephemeris}" == "null":
-            ephemeris = f"${params.ephemerides_dir}/{project}/{pulsar}.par"
-            if not os.path.exists(ephemeris):
-                # Default to using PTA ephemeris if one does not exist
-                ephemeris = f"${params.ephemerides_dir}/PTA/{pulsar}.par"
-            if not os.path.exists(ephemeris):
-                # Default to using TPA ephemeris if one does not exist
-                ephemeris = f"${params.ephemerides_dir}/TPA/{pulsar}.par"
-            if not os.path.exists(ephemeris):
-                # Default to using RelBin ephemeris if one does not exist
-                ephemeris = f"${params.ephemerides_dir}/RelBin/{pulsar}.par"
-            if not os.path.exists(ephemeris):
-                # Default to using PTUSE ephemeris if one does not exist
-                ephemeris = f"${params.ephemerides_dir}/PTUSE/{pulsar}.par"
+            ephemeris = grab_ephemeris(pulsar, project)
         else:
             ephemeris = "${params.ephemeris}"
         if "${params.template}" == "null":
-            template = f"${params.templates_dir}/{project}/{band}/{pulsar}.std"
-            if not os.path.exists(template):
-                # Try LBAND template
-                template = f"${params.templates_dir}/{project}/LBAND/{pulsar}.std"
-            if not os.path.exists(template):
-                # Default to using PTA template if one does not exist
-                template = f"${params.templates_dir}/PTA/{band}/{pulsar}.std"
-            if not os.path.exists(template):
-                # Final attempt is PTA LBAND template
-                template = f"${params.templates_dir}/PTA/LBAND/{pulsar}.std"
-            if not os.path.exists(template):
-                # Default to using TPA template if one does not exist
-                template = f"${params.templates_dir}/TPA/{band}/{pulsar}.std"
-            if not os.path.exists(template):
-                # Final attempt is TPA LBAND template
-                template = f"${params.templates_dir}/TPA/LBAND/{pulsar}.std"
-            if not os.path.exists(template):
-                # Default to using RelBin template if one does not exist
-                template = f"${params.templates_dir}/RelBin/{band}/{pulsar}.std"
-            if not os.path.exists(template):
-                # Final attempt is RelBin LBAND template
-                template = f"${params.templates_dir}/RelBin/LBAND/{pulsar}.std"
+            template = grab_template(pulsar, project, band)
         else:
             template = "${params.template}"
         ephem_template = {
@@ -235,8 +204,8 @@ process OBS_LIST {
         }
         if "${params.upload}" == "true":
             # Get or create template
-            template_project = template.split("/")[-3]
-            template_band = template.split("/")[-2]
+            template_band = template.split("/")[-3]
+            template_project = template.split("/")[-2]
             template_response = template_client.create(
                 pulsar,
                 template_band,
@@ -311,10 +280,10 @@ process PSRADD_CALIBRATE_CLEAN {
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "*zap.ar"
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_raw.ar"), path("${pulsar}_${utc}_zap.ar"), env(SNR)
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_raw.ar"), path("${pulsar}_${utc}_zap.ar"), env(SNR)
 
     """
     if ${params.use_edge_subints}; then
@@ -334,7 +303,7 @@ process PSRADD_CALIBRATE_CLEAN {
     psradd -E ${ephemeris} -o ${pulsar}_${utc}_raw.raw \${archives}
 
     echo "Calibrate the polarisation of the archive"
-    if [ "${cal_loc}" == "" ]; then
+    if [[ "${cal_loc}" == "" || "${cal_loc}" == "None" ]]; then
         # The archives have already be calibrated so just update the headers
         pac -XP -O ./ -e scalP ${pulsar}_${utc}_raw.raw
     else
@@ -389,10 +358,10 @@ process GRAB_PREVIOUS_ARCHIVE_SNR {
     label 'meerpipe'
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), env(SNR)
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), env(SNR)
 
     """
     SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
@@ -422,8 +391,8 @@ workflow MEERPIPE {
         GRAB_PREVIOUS_ARCHIVE_SNR( obs_data )
 
         files_and_meta = GRAB_PREVIOUS_ARCHIVE_SNR.out.map {
-            pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, snr ->
-            [pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, "dummy_file.ar", "${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar", snr]
+            pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, snr ->
+            [ pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, "dummy_file.ar", "${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar", snr ]
         }
     } else {
         // Combine archives,flux calibrate Clean of RFI with MeerGaurd
@@ -439,8 +408,8 @@ workflow MEERPIPE {
     DECIMATE_TOA_RESIDUALS(
         // Only send it the paths and vals it needs
         files_and_meta.map {
-            pulsar, utc, obs_pid, beam, band, dur, pipe_id, ephemeris, template, raw_archive, cleaned_archive, snr ->
-            [ pulsar, utc, obs_pid, beam, dur, pipe_id, ephemeris, template, cleaned_archive, snr ]
+            pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, raw_archive, cleaned_archive, snr ->
+            [ pulsar, utc, beam, dur, pipe_id, cleaned_archive, snr ]
         }
     )
 }

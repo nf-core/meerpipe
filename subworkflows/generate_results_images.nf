@@ -5,10 +5,10 @@ process DM_RM_CALC {
     label 'meerpipe'
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_dm_rm_fit.txt")
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path("${pulsar}_${utc}_dm_rm_fit.txt")
 
     script:
     if ( task.attempt > 2 )
@@ -99,7 +99,7 @@ process GENERATE_IMAGE_RESULTS {
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "results.json"
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(dm_results)
+    tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(dm_results)
 
     output:
     tuple val(pulsar), val(pipe_id), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
@@ -126,7 +126,7 @@ process GENERATE_IMAGE_RESULTS {
     pam -FTp -e cleanFTp ${cleaned_archive}
 
     # Create matplotlib images and dump the results calculations into a results.json file
-    generate_images_results -pid ${obs_pid} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -cleanFTp *cleanFTp -parfile ${ephemeris} -template ${template} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
+    generate_images_results -pid ${project_short} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -cleanFTp *cleanFTp -parfile ${ephemeris} -template ${template} -rcvr ${band} -snr ${snr} -dmfile ${dm_results}
     """
 }
 

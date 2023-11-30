@@ -4,6 +4,22 @@
 nchans = params.nchans.split(',').collect { it.toInteger() }
 npols  = params.npols.split(',').collect  { it.toInteger() }
 
+
+process GRAB_ALL_PAIRS {
+    label 'ephem_template'
+
+    input:
+    val pulsar
+
+    output:
+    path "all_pairs.csv"
+
+    """
+    grab_all_pairs ${pulsar}
+    """
+}
+
+
 process DECIMATE {
     label 'cpu'
     label 'meerpipe'
@@ -11,10 +27,10 @@ process DECIMATE {
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
 
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(dur), val(pipe_id), path(ephemeris), path(template), path(cleaned_archive), val(snr)
+    tuple val(pulsar), val(utc), val(beam), val(dur), val(pipe_id), path(cleaned_archive), val(snr)
 
     output:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(dur), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_zap.*.ar")
+    tuple val(pulsar), val(utc), val(beam), val(dur), val(pipe_id), path("${pulsar}_${utc}_zap.*.ar")
 
     """
     for nchan in ${nchans.join(' ')}; do
@@ -62,12 +78,13 @@ process GENERATE_TOAS {
     label 'cpu'
     label 'psrchive'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/timing", mode: 'copy', pattern: "*.{residual,tim,par,std}"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/timing/${project_short}", mode: 'copy', pattern: "*.{residual,tim,par,std}"
+
     input:
-    tuple val(pulsar), val(utc), val(obs_pid), val(beam), val(dur), val(pipe_id), path(ephemeris), path(template), path(decimated_archives)
+    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(utc), val(beam), val(dur), val(pipe_id), path(decimated_archives)
 
     output:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path("*.tim"), path("*.residual")
+    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path("*.tim"), path("*.residual")
 
     """
     # Loop over each DECIMATEd archive
@@ -117,38 +134,45 @@ process UPLOAD_TOAS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(obs_pid), val(pipe_id), path(ephemeris), path(toas), path(residuals)
+    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path(toas), path(residuals)
 
     output:
-    tuple val(pulsar), val(obs_pid), path(ephemeris)
+    tuple val(pulsar), val(project_short), path(ephemeris)
 
 
     """
     #!/usr/bin/env python
 
+    import os
     import logging
     from glob import glob
     from psrdb.graphql_client import GraphQLClient
-    from psrdb.utils.other import setup_logging, decode_id, get_graphql_id
-    from psrdb.tables.pipeline_image import PipelineImage
-    from psrdb.tables.pipeline_run import PipelineRun
+    from psrdb.utils.other import setup_logging, get_graphql_id, get_rest_api_id
     from psrdb.tables.toa import Toa
+    from psrdb.tables.template import Template
+
+    import psrdb
+    print(psrdb.__file__)
 
     logger = setup_logging(console=True, level=logging.DEBUG)
     client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger)
-    toa_client            = Toa(client)
-    pipeline_run_client   = PipelineRun(client)
-    pipeline_run_client.get_dicts = True
-    pid = '${obs_pid.toLowerCase()}'
+    toa_client      = Toa(client)
+    template_client = Template(client)
+
+    # Upload template (if not uploaded already)
+    template = os.path.realpath("${template}")
+    template_band = template.split("/")[-3]
+    template_project = template.split("/")[-2]
+    template_response = template_client.create(
+        "${pulsar}",
+        template_band,
+        template,
+        project_short=template_project,
+    )
+    logger.debug(template_response)
+    template_id = get_rest_api_id(template_response, logging.getLogger(__name__))
 
     # Upload TOAs
-    # Grab ephemeris and template ids
-    pipeline_run_data = pipeline_run_client.list(
-        id=${pipe_id},
-    )
-    logger.info(pipeline_run_data)
-    ephemeris_id = decode_id(pipeline_run_data[0]["ephemeris"]["id"])
-    template_id  = decode_id(pipeline_run_data[0]["template"]["id"])
     for toa_file in ["${toas.join('","')}"]:
         if "dm_corrected" in toa_file:
             dmcorrected = True
@@ -176,7 +200,8 @@ process UPLOAD_TOAS {
             toa_lines = f.readlines()
             toa_response = toa_client.create(
                 ${pipe_id},
-                ephemeris_id,
+                "${project_short}",
+                "${ephemeris}",
                 template_id,
                 toa_lines,
                 dmcorrected,
@@ -198,20 +223,19 @@ process GENERATE_RESIDUALS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(obs_pid), path(ephemeris)
+    tuple val(pulsar), val(project_short), path(ephemeris)
 
     """
     # Loop over each of the TOA filters
     for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
         for nchan in ${nchans.join(' ')}; do
             echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
-            psrdb toa download ${pulsar} \$min_or_max_sub --nchan \$nchan
+            psrdb toa download ${pulsar} --project ${project_short} \$min_or_max_sub --nchan \$nchan
             echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
-            tempo2_wrapper.sh *tim ${ephemeris}
-            rm *tim
+            tempo2_wrapper.sh toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim ${ephemeris}
             if [ -f "toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual" ]; then
                 echo -e "\\nUpload the residuals\\n--------------------------\\n"
-                psrdb residual create ${pulsar} ${ephemeris} ${obs_pid} toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual
+                psrdb residual create toa_${pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual
             fi
         done
     done
@@ -223,16 +247,31 @@ workflow DECIMATE_TOA_RESIDUALS {
         files_and_meta // channel
 
     main:
-        // Decimate into different time and freq chunks using pam
+        // Grab all ephemeris and template pairs for each pulsar
+        GRAB_ALL_PAIRS( files_and_meta.groupTuple().map {
+                pulsar, utc, beam, dur, pipe_id, cleaned_archive, snr ->
+                pulsar
+            }
+        )
+
         DECIMATE( files_and_meta )
 
-        // Generate TOAs
-        GENERATE_TOAS( DECIMATE.out )
+        // Decimate into different time and freq chunks using pam
+        // DECIMATE( files_and_meta )
+
+        // // Generate TOAs
+        GENERATE_TOAS(
+            GRAB_ALL_PAIRS.out.splitCsv().combine(DECIMATE.out, by: 0)
+        )
 
         if ( params.upload ) {
             UPLOAD_TOAS( GENERATE_TOAS.out )
 
             // For each pulsar (not each obs), download all toas and fit residuals
-            GENERATE_RESIDUALS( UPLOAD_TOAS.out.groupTuple().map { pulsar, obs_pid, ephemeris -> [ pulsar, obs_pid.first(), ephemeris.first() ] } )
+            GENERATE_RESIDUALS(
+                UPLOAD_TOAS.out.groupTuple().cross( GRAB_ALL_PAIRS.out.splitCsv() ).map{ it[1] }.map {
+                    pulsar, project_short, ephem, template -> [ pulsar, project_short, ephem ]
+                }
+            )
         }
 }
