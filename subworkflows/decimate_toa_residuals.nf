@@ -23,6 +23,7 @@ process GRAB_ALL_PAIRS {
 process DECIMATE {
     label 'cpu'
     label 'meerpipe'
+    label 'scratch'
 
     publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
 
