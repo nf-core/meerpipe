@@ -27,8 +27,11 @@ process DM_RM_CALC {
         # Calculate nchan to get desired TOA S/N and make sure it is a factor of the archive channels
         arnchan=\$(vap -c nchan ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
         nchan=\$(python -c "import math; raw_nchan=math.floor( (${snr}/10.) ** 2); print(next((factor for factor in range(\$arnchan + 1, 2, -1) if \$arnchan % factor == 0 and factor < raw_nchan and factor <= 64)))")
-        pam --setnchn \${nchan} -S -p -e dmcalc ${cleaned_archive}
-        pam --setnchn \${nchan} -S    -e rmcalc ${cleaned_archive}
+        if [ \$nchan -gt 16 ]; then
+            nchan=16
+        fi
+        pam --setnchn \${nchan} -T -S -p -e dmcalc ${cleaned_archive}
+        pam --setnchn \${nchan} -T -S    -e rmcalc ${cleaned_archive}
 
         echo -e "\\nCreate TOAs with max channel archive\\n----------------------------------"
         # Grab template nchan
@@ -44,12 +47,15 @@ process DM_RM_CALC {
         echo -e "\\nCalc DM with tempo2\\n----------------------------------"
         # Remove dm derivatives
         sed '/^DM[1-9]/d' ${ephemeris} > ${ephemeris}.dm
+        echo "MODE 1" >>  ${ephemeris}.dm
         # Fit for DM
         tempo2 -nofit -fit DM -set START 40000 -set FINISH 99999 -f ${ephemeris}.dm -outpar ${ephemeris}.dmfit dm.tim
 
-        echo -e "\\nFit for RM\\n----------------------------------"
         input_rm=\$(vap -c rm ${pulsar}_${utc}_zap.rmcalc | tail -n 1| tr -s ' ' | cut -d ' ' -f 2)
-        rmfit -D -R \$input_rm -m -100,100,2000 ${pulsar}_${utc}_zap.rmcalc -K /PNG > rmfit_output.txt
+        lower_rm=\$(echo "\$input_rm - 34" | bc -l)
+        higher_rm=\$(echo "\$input_rm + 34" | bc -l)
+        echo -e "\\nFit for RM from \$lower_rm - \$higher_rm \\n----------------------------------"
+        rmfit -D -m \$lower_rm,\$higher_rm,200 ${pulsar}_${utc}_zap.rmcalc -K /PNG > rmfit_output.txt
 
         echo -e "\\nGrab the outputs and write it to a file\\n----------------------------------"
         DM=\$(grep    "^DM "      ${ephemeris}.dmfit | awk '{print \$2}')
@@ -71,7 +77,8 @@ process DM_RM_CALC {
         """
     else
         """
-        pdmp -g ${cleaned_archive}.ps/cps ${cleaned_archive}
+        pam -T -S -p -e dmcalc ${cleaned_archive}
+        pdmp -g ${cleaned_archive}.ps/cps -mc 16 *dmcalc
 
         # Grab the outputs and write it to a file
         DM=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 5)
