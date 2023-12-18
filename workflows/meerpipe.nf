@@ -141,9 +141,14 @@ process OBS_LIST {
     obs_client.set_use_pagination(True)
 
     if "${params.obs_csv}" == "null":
+        if "${pulsars}" == "":
+            pulsar_list = ""
+        else:
+            pulsar_list = ["${pulsars.split(',').join('","')}"]
+        print(pulsar_list)
         # Query based on provided parameters
         obs_data = obs_client.list(
-            pulsar_name=["${pulsars.split(',').join('","')}"],
+            pulsar_name=pulsar_list,
             project_short="${project_short}",
             utcs="${utcs}",
             utce="${utce}",
@@ -233,10 +238,12 @@ process OBS_LIST {
     obs_df['ephemeris'] = ''
     obs_df['template'] = ''
     for index, obs in obs_df.iterrows():
+        pulsar = obs['Pulsar Jname']
+        band   = obs['Observing Band']
         ephemeris = pulsar_ephem_template[pulsar][band]["ephemeris"]
         template  = pulsar_ephem_template[pulsar][band]["template"]
 
-        logger.info(f"Setting up ID: {obs['Obs ID']} pulsar: {obs['Pulsar Jname']} band: {obs['Observing Band']} template: {template} ephemeris: {ephemeris}")
+        logger.info(f"Setting up ID: {obs['Obs ID']} pulsar: {pulsar} band: {band} template: {template} ephemeris: {ephemeris}")
 
         # Set job as running
         if "${params.upload}" == "true":
@@ -282,6 +289,9 @@ process PSRADD_CALIBRATE_CLEAN {
     input:
     tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
 
+    when:
+    beam != "0"
+
     output:
     tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), path("${pulsar}_${utc}_raw.ar"), path("${pulsar}_${utc}_zap.ar"), env(SNR)
 
@@ -321,7 +331,7 @@ process PSRADD_CALIBRATE_CLEAN {
         echo "Found RM of \${rm} in the private RM catalogue"
     else
         rm=\$(psrcat -c RM ${pulsar} -X -all | tr -s ' ' | cut -d ' ' -f 1)
-        if [ "\${rm}" == "*" ]; then
+        if [[ "\${rm}" == "*" || "\${rm}" == "WARNING*" ]]; then
             echo "No RM found in the ATNF catalogue"
             rm=0
         else
@@ -359,6 +369,9 @@ process GRAB_PREVIOUS_ARCHIVE_SNR {
 
     input:
     tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
+
+    when:
+    beam != "0"
 
     output:
     tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), env(SNR)
