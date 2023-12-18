@@ -200,7 +200,12 @@ process OBS_LIST {
         else:
             ephemeris = "${params.ephemeris}"
         if "${params.template}" == "null":
-            template = grab_template(pulsar, project, band)
+            try:
+                template = grab_template(pulsar, project, band)
+            except ValueError:
+                template = os.path.join(os.getcwd(), "no_template.std")
+                with open(template, 'w'):
+                    pass # Make an empty file
         else:
             template = "${params.template}"
         ephem_template = {
@@ -209,16 +214,19 @@ process OBS_LIST {
         }
         if "${params.upload}" == "true":
             # Get or create template
-            template_band = template.split("/")[-3]
-            template_project = template.split("/")[-2]
-            template_response = template_client.create(
-                pulsar,
-                template_band,
-                template,
-                project_short=template_project,
-            )
-            logger.debug(template_response)
-            ephem_template["template_id"] = get_rest_api_id(template_response, logging.getLogger(__name__))
+            if template == os.path.join(os.getcwd(), "no_template.std"):
+                ephem_template["template_id"] = -1
+            else:
+                template_band = template.split("/")[-3]
+                template_project = template.split("/")[-2]
+                template_response = template_client.create(
+                    pulsar,
+                    template_band,
+                    template,
+                    project_short=template_project,
+                )
+                logger.debug(template_response)
+                ephem_template["template_id"] = get_rest_api_id(template_response, logging.getLogger(__name__))
             # Get or create ephemeris
             ephemeris_project = ephemeris.split("/")[-2]
             ephemeris_response = ephemeris_client.create(
@@ -284,7 +292,7 @@ process PSRADD_CALIBRATE_CLEAN {
     label 'meerpipe'
     label 'scratch'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: 'copy', pattern: "*zap.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}", mode: params.publish_dir_mode, pattern: "${ template.baseName == "no_template" ? "*raw.ar" : "*zap.ar" }"
 
     input:
     tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(cal_loc), val(pipe_id), path(ephemeris), path(template)
@@ -340,26 +348,32 @@ process PSRADD_CALIBRATE_CLEAN {
     fi
     pam --RM \${rm} -m ${pulsar}_${utc}_raw.ar
 
-    echo "Check if you need to change the template bins"
-    obs_nbin=\$(vap -c nbin ${pulsar}_${utc}_raw.raw | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-    std_nbin=\$(vap -c nbin ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-    if [ "\$obs_nbin" == "\$std_nbin"]; then
-        std_template=${template}
+    if [ "${template.baseName}" == "no_template" ]; then
+        echo "No template provided so not cleaning archive"
+        touch ${pulsar}_${utc}_zap.ar
+        SNR=None
     else
-        echo "Making a new template with right number of bins"
-        pam -b \$((std_nbin / obs_nbin)) -e new_std ${template}
-        std_template=*new_std
+        echo "Check if you need to change the template bins"
+        obs_nbin=\$(vap -c nbin ${pulsar}_${utc}_raw.raw | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        std_nbin=\$(vap -c nbin ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        if [ "\$obs_nbin" == "\$std_nbin"]; then
+            std_template=${template}
+        else
+            echo "Making a new template with right number of bins"
+            pam -b \$((std_nbin / obs_nbin)) -e new_std ${template}
+            std_template=*new_std
+        fi
+        echo "Clean the archive"
+        clean_archive.py -a ${pulsar}_${utc}_raw.ar -T \${std_template} -o ${pulsar}_${utc}_zap.ar
+
+        # Get the signal to noise ratio of the cleaned archive
+        SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
+
+        echo "Flux calibrate"
+        # Create a time and polarisation scruchned profile
+        pam -Tp -e tp ${pulsar}_${utc}_zap.ar
+        fluxcal -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${pulsar}_${utc}_zap.ar -rawfile ${pulsar}_${utc}_raw.ar -tpfile *tp -parfile ${ephemeris}
     fi
-    echo "Clean the archive"
-    clean_archive.py -a ${pulsar}_${utc}_raw.ar -T \${std_template} -o ${pulsar}_${utc}_zap.ar
-
-    # Get the signal to noise ratio of the cleaned archive
-    SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
-
-    echo "Flux calibrate"
-    # Create a time and polarisation scruchned profile
-    pam -Tp -e tp ${pulsar}_${utc}_zap.ar
-    fluxcal -psrname ${pulsar} -obsname ${utc} -obsheader ${params.input_dir}/${pulsar}/${utc}/${beam}/*/obs.header -cleanedfile ${pulsar}_${utc}_zap.ar -rawfile ${pulsar}_${utc}_raw.ar -tpfile *tp -parfile ${ephemeris}
     """
 }
 
@@ -419,11 +433,14 @@ workflow MEERPIPE {
 
     // Perform the timing subworkflow which does decimation, and creates toas and residuals
     DECIMATE_TOA_RESIDUALS(
-        // Only send it the paths and vals it needs
-        files_and_meta.map {
-            pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, raw_archive, cleaned_archive, snr ->
-            [ pulsar, utc, beam, dur, pipe_id, cleaned_archive, snr ]
-        }
+        files_and_meta
+            // Filter out observations without templates
+            .filter { it[8].baseName != "no_template" }
+            // Only send it the paths and vals it needs
+            .map {
+                pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, raw_archive, cleaned_archive, snr ->
+                [ pulsar, utc, beam, dur, pipe_id, cleaned_archive, snr ]
+            }
     )
 }
 
