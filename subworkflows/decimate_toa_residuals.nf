@@ -85,13 +85,13 @@ process GENERATE_TOAS {
     label 'cpu'
     label 'psrchive'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/timing/${project_short}", mode: 'copy', pattern: "*.{residual,tim,par,std}"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/timing/${project_short}", mode: 'copy', pattern: "*.{tim,par,std}"
 
     input:
     tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(utc), val(beam), val(dur), val(pipe_id), path(decimated_archives)
 
     output:
-    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path("*.tim"), path("*.residual")
+    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path("*.tim")
 
     """
     # Loop over each DECIMATEd archive
@@ -117,10 +117,6 @@ process GENERATE_TOAS {
         echo "Generating TOAs for \${ar}.tim\n----------------------------------"
         pat -jp \$port  -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM \$ar  > \${ar}.tim
     done
-
-    # Create residuals for time largest archive
-    largest_archive=\$(ls ${pulsar}_${utc}_zap.${nchans.max()}ch1p*t.ar | tail -n 1)
-    tempo2_wrapper.sh \${largest_archive} ${ephemeris}
     """
 }
     // DM corrected stuff
@@ -141,7 +137,7 @@ process UPLOAD_TOAS {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path(toas), path(residuals)
+    tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path(toas)
 
     output:
     tuple val(pulsar), val(project_short), path(ephemeris)
@@ -255,7 +251,8 @@ workflow DECIMATE_TOA_RESIDUALS {
 
     main:
         // Grab all ephemeris and template pairs for each pulsar
-        GRAB_ALL_PAIRS( files_and_meta.groupTuple().map {
+        GRAB_ALL_PAIRS(
+            files_and_meta.groupTuple().map {
                 pulsar, utc, beam, dur, pipe_id, cleaned_archive, snr ->
                 pulsar
             }
