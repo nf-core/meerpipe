@@ -25,21 +25,27 @@ process DECIMATE {
     label 'meerpipe'
     label 'scratch'
 
-    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap.*.ar"
+    publishDir "${params.outdir}/${pulsar}/${utc}/${beam}/decimated", mode: 'copy', pattern: "${pulsar}_${utc}_zap*t.ar"
 
     input:
     tuple val(pulsar), val(utc), val(beam), val(dur), val(pipe_id), path(cleaned_archive), val(snr)
 
     output:
-    tuple val(pulsar), val(utc), val(beam), val(dur), val(pipe_id), path("${pulsar}_${utc}_zap.*.ar")
+    tuple val(pulsar), val(utc), val(beam), val(dur), val(pipe_id), path("${pulsar}_${utc}_zap*t.ar")
 
     """
+    if [ "${params.chop_edge}" == "true" ]; then
+        chop_edge_channels ${cleaned_archive}
+        clean_ar=${cleaned_archive.getName().replace("_zap", "_zap_chopped")}
+    else
+        clean_ar=${cleaned_archive}
+    fi
     for nchan in ${nchans.join(' ')}; do
         if ${params.use_max_nsub}; then
             # Calculate nsub to get desired TOA S/N
             max_nsub=\$(python -c "import math; print(math.floor(1/\$nchan * (${snr}/${params.tos_sn}) ** 2))")
 
-            input_nsub=\$(vap -c nsub ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+            input_nsub=\$(vap -c nsub \${clean_ar} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
             if [ \$max_nsub -gt \$input_nsub ]; then
                 # Greater than input nsub so set input as max
                 max_nsub=\$input_nsub
@@ -66,7 +72,7 @@ process DECIMATE {
                 fi
 
                 echo "Decimate nsub=\${nsub}  nchan=\${nchan} stokes=\${stokes}"
-                pam --setnsub \${nsub} --setnchn \${nchan} -S \${stokes_op} -e \${nchan}ch\${stokes}p\${nsub}t.ar ${cleaned_archive}
+                pam --setnsub \${nsub} --setnchn \${nchan} -S \${stokes_op} -e \${nchan}ch\${stokes}p\${nsub}t.ar \${clean_ar}
             done
         done
     done
