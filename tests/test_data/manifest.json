@@ -1,0 +1,27 @@
+{
+    "pipeline_name": "nf-core/meerpipe",
+    "pipeline_description": "Pulsar timing data processing pipeline for MeerTime data.",
+    "pipeline_version": "1.0dev",
+    "created_by": "nswainst",
+    "configuration": {
+        "utcs": "2023-11-16-04:46:42",
+        "utce": "2023-11-16-04:46:42",
+        "project": "",
+        "obs_csv": "null",
+        "pulsar": "J1455-3330",
+        "use_edge_subints": "false",
+        "tos_sn": "12",
+        "nchans": "1",
+        "npols": "1,4",
+        "upload": "true",
+        "psrdb_url": "http://localhost:8000/",
+        "input_dir": "/fred/oz005/timing",
+        "outdir": "/fred/oz005/users/nswainst/meerpipe_testing_outputs",
+        "email": "null",
+        "type": "meertime",
+        "ephemerides_dir": "null",
+        "templates_dir": "null",
+        "ephemeris": "null",
+        "template": "null"
+    }
+}
