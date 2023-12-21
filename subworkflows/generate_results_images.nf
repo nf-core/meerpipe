@@ -175,7 +175,7 @@ process GENERATE_IMAGE_RESULTS_RAW {
 process UPLOAD_RESULTS {
     label 'psrdb'
 
-    maxForks 1
+    maxForks 2
 
     input:
     tuple val(pulsar), val(pipe_id), path(dat_files), path(png_files), path(dynspec_files), path(results_json)

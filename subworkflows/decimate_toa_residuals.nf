@@ -134,7 +134,7 @@ process GENERATE_TOAS {
 process UPLOAD_TOAS {
     label 'psrdb'
 
-    maxForks 1
+    maxForks 2
 
     input:
     tuple val(pulsar), val(project_short), path(ephemeris), path(template), val(pipe_id), path(toas)
@@ -223,7 +223,7 @@ process UPLOAD_TOAS {
 process GENERATE_RESIDUALS {
     label 'psrdb_tempo2'
 
-    maxForks 1
+    maxForks 2
 
     input:
     tuple val(pulsar), val(project_short), path(ephemeris)
