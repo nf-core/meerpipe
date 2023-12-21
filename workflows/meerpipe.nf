@@ -151,7 +151,7 @@ process PSRADD_CALIBRATE_CLEAN {
         echo "Found RM of \${rm} in the private RM catalogue"
     else
         rm=\$(psrcat -c RM ${pulsar} -X -all | tr -s ' ' | cut -d ' ' -f 1)
-        if [[ "\${rm}" == "*" || "\${rm}" == "WARNING*" ]]; then
+        if [[ "\${rm}" == "*" || "\${rm}" == "WARNING:" ]]; then
             echo "No RM found in the ATNF catalogue"
             rm=0
         else
@@ -203,7 +203,11 @@ process GRAB_PREVIOUS_ARCHIVE_SNR {
     tuple val(pulsar), val(utc), val(project_short), val(beam), val(band), val(dur), val(pipe_id), path(ephemeris), path(template), env(SNR)
 
     """
-    SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
+    if [ "${template.baseName}" == "no_template" ]; then
+        SNR=None
+    else
+        SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${params.outdir}/${pulsar}/${utc}/${beam}/${pulsar}_${utc}_zap.ar | cut -d '=' -f 2)
+    fi
     """
 }
 
