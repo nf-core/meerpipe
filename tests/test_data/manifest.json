@@ -19,8 +19,6 @@
         "outdir": "/fred/oz005/users/nswainst/meerpipe_testing_outputs",
         "email": "null",
         "type": "meertime",
-        "ephemerides_dir": "null",
-        "templates_dir": "null",
         "ephemeris": "null",
         "template": "null"
     }

@@ -77,6 +77,7 @@ process OBS_LIST {
         obs_data = obs_client.list(
             pulsar_name=pulsar_list,
             project_short="${project_short}",
+            main_project="MeerTIME",
             utcs="${utcs}",
             utce="${utce}",
             obs_type="fold",
