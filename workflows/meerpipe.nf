@@ -126,7 +126,7 @@ process UPLOAD_RESULTS_RAW {
     maxForks 1
 
     input:
-    tuple val(pulsar), val(pipe_id), path(png_files)
+    tuple val(meta), path(png_files)
 
     """
     #!/usr/bin/env python
@@ -159,7 +159,7 @@ process UPLOAD_RESULTS_RAW {
     # Upload images
     for image_path, image_type, resolution, cleaned in image_data:
         image_response = pipeline_image_client.create(
-            ${pipe_id},
+            ${meta.pipe_id},
             image_path,
             image_type,
             resolution,
@@ -172,7 +172,7 @@ process UPLOAD_RESULTS_RAW {
 
     # Update pipeline run as completed (will update pulsarFoldResult)
     pipeline_run_response = pipeline_run_client.update(
-        ${pipe_id},
+        ${meta.pipe_id},
         "Completed",
         results_dict={
             "percent_rfi_zapped": None,
