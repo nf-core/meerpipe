@@ -63,7 +63,10 @@ process GENERATE_IMAGE_RESULTS {
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
     # psrplot images
-    for i in "raw ${raw_archive}" "cleaned ${cleaned_archive}"; do
+    raw_archive=${raw_archive}
+    cleaned_archive=${cleaned_archive}
+    type_file_array=(${ template.baseName == "no_template" ? '"raw ${raw_archive}"' : '"raw ${raw_archive}" "cleaned ${cleaned_archive}"' })
+    for i in "\${type_file_array[@]}"; do
         set -- \$i
         type=\$1
         file=\$2
@@ -76,13 +79,27 @@ process GENERATE_IMAGE_RESULTS {
     done
 
     # Create flux and polarisation scrunched archive for SNR images
-    pam -Fp -e cleanFp ${cleaned_archive}
     pam -Fp -e rawFp ${raw_archive}
-    # Create a frequency, time and polarisation scrunched file for flux calc
-    pam -FTp -e cleanFTp ${cleaned_archive}
+    if [ "${template.baseName}" != "no_template" ]; then
+        pam -Fp -e cleanFp ${cleaned_archive}
+        # Create a frequency, time and polarisation scrunched file for flux calc
+        pam -FTp -e cleanFTp ${cleaned_archive}
+    fi
 
     # Create matplotlib images and dump the results calculations into a results.json file
-    generate_images_results -pid ${meta.project_short} -cleanedfile ${cleaned_archive} -rawfile ${raw_archive} -cleanFp *cleanFp -rawFp *rawFp -cleanFTp *cleanFTp -parfile ${ephemeris} -template ${template} -rcvr ${meta.band} -snr ${snr} -dmfile ${dm_results}
+    generate_images_results \\
+        --pid ${meta.project_short} \\
+        --raw_file ${raw_archive} \\
+        --raw_Fp *rawFp \\
+        --cleaned_file ${cleaned_archive} \\
+        --clean_Fp *cleanFp \\
+        --clean_FTp *cleanFTp \\
+        --par_file ${ephemeris} \\
+        --template ${template} \\
+        --rcvr ${meta.band} \\
+        --snr ${snr} \\
+        --dm_file ${dm_results} \\
+        ${ template.baseName == "no_template" ? "--raw_only" : "" }
     """
 
     stub:

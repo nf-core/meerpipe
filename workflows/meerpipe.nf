@@ -118,113 +118,6 @@ process GRAB_PREVIOUS_ARCHIVE_SNR {
 }
 
 
-
-
-process UPLOAD_RESULTS_RAW {
-    label 'psrdb'
-
-    maxForks 1
-
-    input:
-    tuple val(meta), path(png_files)
-
-    """
-    #!/usr/bin/env python
-
-    import json
-    import logging
-    from glob import glob
-    from psrdb.graphql_client import GraphQLClient
-    from psrdb.utils.other import setup_logging, decode_id, get_graphql_id
-    from psrdb.tables.pipeline_image import PipelineImage
-    from psrdb.tables.pipeline_run import PipelineRun
-    from psrdb.tables.toa import Toa
-
-    logger = setup_logging(console=True, level=logging.DEBUG)
-    client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger)
-    pipeline_image_client = PipelineImage(client)
-    pipeline_run_client   = PipelineRun(client)
-    pipeline_run_client.get_dicts = True
-
-    image_data = []
-    # file_loc, file_type, file_res, cleaned
-    image_data.append( ("raw_profile_ftp.png",    'profile',     'high', False) )
-    image_data.append( ("raw_profile_fts.png",    'profile-pol', 'high', False) )
-    image_data.append( ("raw_phase_time.png",     'phase-time',  'high', False) )
-    image_data.append( ("raw_phase_freq.png",     'phase-freq',  'high', False) )
-    image_data.append( ("raw_bandpass.png",       'bandpass',    'high', False) )
-    image_data.append( ("raw_SNR_cumulative.png", 'snr-cumul',   'high', False) )
-    image_data.append( ("raw_SNR_single.png",     'snr-single',  'high', False) )
-
-    # Upload images
-    for image_path, image_type, resolution, cleaned in image_data:
-        image_response = pipeline_image_client.create(
-            ${meta.pipe_id},
-            image_path,
-            image_type,
-            resolution,
-            cleaned,
-        )
-        content = json.loads(image_response.content)
-        if image_response.status_code not in (200, 201):
-            logger.error("Failed to upload image")
-            exit(1)
-
-    # Update pipeline run as completed (will update pulsarFoldResult)
-    pipeline_run_response = pipeline_run_client.update(
-        ${meta.pipe_id},
-        "Completed",
-        results_dict={
-            "percent_rfi_zapped": None,
-            "dm": None,
-            "dm_err": None,
-            "dm_epoch": None,
-            "dm_chi2r": None,
-            "dm_tres": None,
-            "rm": None,
-            "rm_err": None,
-            "sn": None,
-            "flux": None,
-        },
-    )
-    """
-}
-
-
-process GENERATE_IMAGE_RESULTS_RAW {
-    label 'cpu'
-    label 'meerpipe'
-
-    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/images", mode: 'copy', pattern: "{c,t,r}*png"
-    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/scintillation", mode: 'copy', pattern: "*dynspec*"
-    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}", mode: 'copy', pattern: "results.json"
-
-    input:
-    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr)
-
-    output:
-    tuple val(meta), path("*.png")
-
-
-    """
-    # psrplot images
-    type=raw
-    file=${raw_archive}
-    # Do the plots for raw file then cleaned file
-    psrplot -p flux -jFTDp -jC                          -g 1024x768 -c above:l= -c above:c="Stokes I Profile (\${type})"     -D \${type}_profile_fts.png/png \$file
-    psrplot -p Scyl -jFTD  -jC                          -g 1024x768 -c above:l= -c above:c="Polarisation Profile (\${type})" -D \${type}_profile_ftp.png/png \$file
-    psrplot -p freq -jTDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Frequency (\${type})"  -D \${type}_phase_freq.png/png  \$file
-    psrplot -p time -jFDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Time (\${type})"       -D \${type}_phase_time.png/png  \$file
-    psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -c skip=1 -g 1024x768 -c above:l= -c above:c="Cleaned bandpass (\${type})"     -D \${type}_bandpass.png/png    \$file
-
-    # Create flux and polarisation scrunched archive for SNR images
-    pam -Fp -e rawFp ${raw_archive}
-
-    # Create matplotlib images and dump the results calculations into a results.json file
-    generate_images_results -pid ${meta.project_short} -rawfile ${raw_archive} -rawFp *rawFp -parfile ${ephemeris} -rcvr ${meta.band} -snr ${snr}
-    """
-}
-
 // Info required for completion email and summary
 def multiqc_report = []
 
@@ -302,16 +195,13 @@ workflow MEERPIPE {
     }
 
     // Calculate the DM with tempo2 or pdmp
-    DM_RM_CALC( files_and_meta.filter { it[2].baseName != "no_template" } )
+    DM_RM_CALC( files_and_meta )
 
     // Other images using matplotlib and psrplot and make a results.json
     GENERATE_IMAGE_RESULTS( DM_RM_CALC.out )
-    GENERATE_IMAGE_RESULTS_RAW( files_and_meta.filter { it[2].baseName == "no_template" } )
-
     // Upload images and results
     if ( params.upload ) {
         UPLOAD_RESULTS( GENERATE_IMAGE_RESULTS.out )
-        UPLOAD_RESULTS_RAW( GENERATE_IMAGE_RESULTS_RAW.out )
     }
 
     // Grab all ephemeris and template pairs for each pulsar

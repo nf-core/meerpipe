@@ -39,7 +39,7 @@ process UPLOAD_RESULTS {
     //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(dat_files), path(png_files), path(dynspec_files), path(results_json)
+    tuple val(meta), path(png_files), path(dat_files), path(dynspec_files), path(results_json)
 
     when:
     task.ext.when == null || task.ext.when
@@ -75,6 +75,8 @@ process UPLOAD_RESULTS {
         logger.info(f"Waiting for \${wait_time} s before retrying")
         time.sleep(wait_time)
 
+    raw_only = ${ dynspec_files.baseName == "empty" ? "True" : "False" }
+
     client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger)
     pipeline_image_client = PipelineImage(client)
     toa_client            = Toa(client)
@@ -92,20 +94,21 @@ process UPLOAD_RESULTS {
         image_data.append( (toa_file, type, 'high', True) )
 
     # file_loc, file_type, file_res, cleaned
-    image_data.append( (    "raw_profile_ftp.png",    'profile',     'high', False) )
-    image_data.append( ("cleaned_profile_ftp.png",    'profile',     'high', True ) )
-    image_data.append( (    "raw_profile_fts.png",    'profile-pol', 'high', False) )
-    image_data.append( ("cleaned_profile_fts.png",    'profile-pol', 'high', True ) )
-    image_data.append( (    "raw_phase_time.png",     'phase-time',  'high', False) )
-    image_data.append( ("cleaned_phase_time.png",     'phase-time',  'high', True ) )
-    image_data.append( (    "raw_phase_freq.png",     'phase-freq',  'high', False) )
-    image_data.append( ("cleaned_phase_freq.png",     'phase-freq',  'high', True ) )
-    image_data.append( (    "raw_bandpass.png",       'bandpass',    'high', False) )
-    image_data.append( ("cleaned_bandpass.png",       'bandpass',    'high', True ) )
-    image_data.append( (    "raw_SNR_cumulative.png", 'snr-cumul',   'high', False) )
-    image_data.append( ("cleaned_SNR_cumulative.png", 'snr-cumul',   'high', True ) )
-    image_data.append( (    "raw_SNR_single.png",     'snr-single',  'high', False) )
-    image_data.append( ("cleaned_SNR_single.png",     'snr-single',  'high', True ) )
+    image_data.append( ("raw_profile_ftp.png",    'profile',     'high', False) )
+    image_data.append( ("raw_profile_fts.png",    'profile-pol', 'high', False) )
+    image_data.append( ("raw_phase_time.png",     'phase-time',  'high', False) )
+    image_data.append( ("raw_phase_freq.png",     'phase-freq',  'high', False) )
+    image_data.append( ("raw_bandpass.png",       'bandpass',    'high', False) )
+    image_data.append( ("raw_SNR_cumulative.png", 'snr-cumul',   'high', False) )
+    image_data.append( ("raw_SNR_single.png",     'snr-single',  'high', False) )
+    if not raw_only:
+        image_data.append( ("cleaned_profile_ftp.png",    'profile',     'high', True ) )
+        image_data.append( ("cleaned_profile_fts.png",    'profile-pol', 'high', True ) )
+        image_data.append( ("cleaned_phase_time.png",     'phase-time',  'high', True ) )
+        image_data.append( ("cleaned_phase_freq.png",     'phase-freq',  'high', True ) )
+        image_data.append( ("cleaned_bandpass.png",       'bandpass',    'high', True ) )
+        image_data.append( ("cleaned_SNR_cumulative.png", 'snr-cumul',   'high', True ) )
+        image_data.append( ("cleaned_SNR_single.png",     'snr-single',  'high', True ) )
 
     # Upload images
     for image_path, image_type, resolution, cleaned in image_data:
@@ -122,8 +125,22 @@ process UPLOAD_RESULTS {
             exit(1)
 
     # Read in results JSON
-    with open("results.json", "r") as f:
-        results_dict = json.load(f)
+    if raw_only:
+        results_dict = {
+            "percent_rfi_zapped": None,
+            "dm": None,
+            "dm_err": None,
+            "dm_epoch": None,
+            "dm_chi2r": None,
+            "dm_tres": None,
+            "rm": None,
+            "rm_err": None,
+            "sn": None,
+            "flux": None,
+        }
+    else:
+        with open("results.json", "r") as f:
+            results_dict = json.load(f)
     # Update pipeline run as completed (will update pulsarFoldResult)
     pipeline_run_response = pipeline_run_client.update(
         ${meta.pipe_id},
