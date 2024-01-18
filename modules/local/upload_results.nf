@@ -19,7 +19,9 @@ process UPLOAD_RESULTS {
     tag "$meta.id"
     label 'psrdb'
 
-    maxForks 2
+    maxForks 1
+    errorStrategy = 'retry'
+    maxRetries = 2
 
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
@@ -58,6 +60,7 @@ process UPLOAD_RESULTS {
     #!/usr/bin/env python
 
     import json
+    import time
     import logging
     from glob import glob
     from psrdb.graphql_client import GraphQLClient
@@ -67,6 +70,11 @@ process UPLOAD_RESULTS {
     from psrdb.tables.toa import Toa
 
     logger = setup_logging(console=True, level=logging.DEBUG)
+    if ${task.attempt} > 1:
+        wait_time = (${task.attempt} - 1) * 30
+        logger.info(f"Waiting for \${wait_time} s before retrying")
+        time.sleep(wait_time)
+
     client = GraphQLClient("${params.psrdb_url}", "${params.psrdb_token}", logger)
     pipeline_image_client = PipelineImage(client)
     toa_client            = Toa(client)
