@@ -243,13 +243,18 @@ include { GENERATE_RESIDUALS     } from '../modules/local/generate_residuals'
 workflow MEERPIPE {
     MANIFEST_CONFIG_DUMP()
 
+    if ( params.obs_csv == "" ) {
+        obs_csv = ""
+    } else {
+        obs_csv = Channel.fromPath(params.obs_csv)
+    }
     // Use PSRDB to work out which obs to process
     OBS_LIST(
         params.pulsar,
         params.utcs,
         params.utce,
         params.project,
-        params.obs_csv,
+        obs_csv,
         params.upload,
         params.psrdb_url,
         params.psrdb_token,
@@ -309,19 +314,10 @@ workflow MEERPIPE {
         UPLOAD_RESULTS_RAW( GENERATE_IMAGE_RESULTS_RAW.out )
     }
 
-    // Perform the timing subworkflow which does decimation, and creates toas and residuals
-    dtr_files_and_meta = files_and_meta
-        // Filter out observations without templates
-        .filter { it[2].baseName != "no_template" }
-        // Only send it the paths and vals it needs
-        .map {
-            meta, ephemeris, template, raw_archive, cleaned_archive, snr ->
-            [ meta, cleaned_archive, snr ]
-        }
     // Grab all ephemeris and template pairs for each pulsar
     GRAB_ALL_PAIRS(
-        dtr_files_and_meta.map {
-            meta, cleaned_archive, snr  ->
+        obs_data.map {
+            meta, ephemeris, template  ->
             [ meta.pulsar ]
         }
         .unique()
@@ -331,7 +327,16 @@ workflow MEERPIPE {
     pulsar_project_ephem_template = GRAB_ALL_PAIRS.out.splitCsv()
 
     // Decimate into different time and freq chunks using pam
-    DECIMATE( dtr_files_and_meta )
+    DECIMATE(
+        files_and_meta
+            // Filter out observations without templates
+            .filter { it[2].baseName != "no_template" }
+            // Only send it the paths and vals it needs
+            .map {
+                meta, ephemeris, template, raw_archive, cleaned_archive, snr ->
+                [ meta, cleaned_archive, snr ]
+            }
+    )
 
     // Generate TOAs
     GENERATE_TOAS(
