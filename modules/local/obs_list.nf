@@ -67,8 +67,8 @@ process OBS_LIST {
     obs_client.get_dicts = True
     obs_client.set_use_pagination(True)
 
-    if "${obs_csv}" == "":
-        if "${pulsars}" == "":
+    if "${obs_csv}" in ("", "null"):
+        if "${pulsars}" in ("", "null"):
             pulsar_list = ""
         else:
             pulsar_list = ["${pulsars.split(',').join('","')}"]
@@ -125,11 +125,11 @@ process OBS_LIST {
             pulsar_ephem_template[pulsar] = {}
 
         # Grab ephermis and templates
-        if "${ephemeris}" == "":
+        if "${ephemeris}" in ("", "null"):
             ephemeris = grab_ephemeris(pulsar, project)
         else:
             ephemeris = "${ephemeris}"
-        if "${template}" == "":
+        if "${template}" in ("", "null"):
             try:
                 template = grab_template(pulsar, project, band)
             except ValueError:
