@@ -1,7 +1,7 @@
 nextflow_process {
 
     name "Test Process OBS_LIST"
-    script "modules/local/obslist.nf"
+    script "modules/local/obs_list.nf"
     process "OBS_LIST"
 
     test("Should run without failures") {
@@ -13,6 +13,7 @@ nextflow_process {
                 utce = "2023-10-30-12:29:25"
                 project = ""
                 obs_csv = ""
+                outdir = "$outputDir"
             }
             process {
                 """
@@ -28,7 +29,7 @@ nextflow_process {
                     params.ephemeris,
                     params.template,
                     params.outdir,
-                    Channel.fromPath("tests/test_data/manifest.json"),
+                    Channel.fromPath("$baseDir/tests/test_data/manifest.json"),
                 ]
                 """
             }
