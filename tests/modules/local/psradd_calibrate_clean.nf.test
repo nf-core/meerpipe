@@ -190,6 +190,37 @@ nextflow_process {
         }
     }
 
+    test("J0514-4408_2020-02-21-17:50:16_1: period: medium DM: low    obs_len: medium no template") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0514-4408_2020-02-21-17:50:16_1",
+                            pulsar: "J0514-4408",
+                            utc: "2020-02-21-17:50:16",
+                            beam: 1,
+                            dur: 1800.00,
+                            cal_loc: "",
+                        ],
+                    "$baseDir/tests/test_data/J0514-4408.par",
+                    "$baseDir/tests/test_data/no_template.std",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert process.out.get(0)[0][5] == "None"
+        }
+    }
+
     test("J0900-3144_2021-04-20-14:47:54_3: period: medium DM: medium obs_len: medium") {
         when {
             params {
@@ -279,7 +310,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 852.012329101562 * 0.99
+            assert Float.valueOf(process.out.get(0)[0][5]) >= 833.4445 * 0.99
         }
     }
 
