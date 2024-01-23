@@ -99,21 +99,21 @@ process MANIFEST_CONFIG_DUMP {
 
 
 process GRAB_PREVIOUS_ARCHIVE_SNR {
-    label 'cpu'
+    label 'process_high'
     label 'meerpipe'
 
     input:
     tuple val(meta), path(ephemeris), path(template)
 
     output:
-    tuple val(meta), path(ephemeris), path(template), env(SNR)
+    tuple val(meta), path(ephemeris), path(template), path("empty_raw.ar"), path("${meta.pulsar}_${meta.utc}_zap.ar"), env(SNR), env(FLUX)
 
     """
-    if [ "${template.baseName}" == "no_template" ]; then
-        SNR=None
-    else
-        SNR=\$(psrstat -j FTp -c snr=pdmp -c snr ${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/${meta.pulsar}_${meta.utc}_zap.ar | cut -d '=' -f 2)
-    fi
+    touch empty_raw.ar
+    ln -s ${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/${meta.pulsar}_${meta.utc}_zap.ar ${meta.pulsar}_${meta.utc}_zap.ar
+    pam -FTp -e FTp ${meta.pulsar}_${meta.utc}_zap.ar
+    SNR=\$(psrstat -c snr=pdmp -c snr ${meta.pulsar}_${meta.utc}_zap.FTp | cut -d '=' -f 2)
+    FLUX=\$(pdv -f ${meta.pulsar}_${meta.utc}_zap.FTp | tail -n 1 | tr -s ' ' | cut -d ' ' -f 7)
     """
 }
 
@@ -181,12 +181,9 @@ workflow MEERPIPE {
     }
 
     if ( params.use_prev_ar ) {
-        GRAB_PREVIOUS_ARCHIVE_SNR( obs_data )
+        GRAB_PREVIOUS_ARCHIVE_SNR( obs_data.filter { it[2].split('/')[-1] != "no_template.std" } )
 
-        files_and_meta = GRAB_PREVIOUS_ARCHIVE_SNR.out.map {
-            pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, snr ->
-            [ pulsar, utc, project_short, beam, band, dur, pipe_id, ephemeris, template, "dummy_file.ar", "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/${meta.pulsar}_${meta.utc}_zap.ar", snr ]
-        }
+        files_and_meta = GRAB_PREVIOUS_ARCHIVE_SNR.out
     } else {
         // Combine archives,flux calibrate Clean of RFI with MeerGaurd
         PSRADD_CALIBRATE_CLEAN( obs_data )
@@ -194,14 +191,44 @@ workflow MEERPIPE {
         files_and_meta = PSRADD_CALIBRATE_CLEAN.out
     }
 
-    // Calculate the DM with tempo2 or pdmp
-    DM_RM_CALC( files_and_meta )
+    files_and_meta = files_and_meta
+        .map {
+            meta, ephemeris, template, raw_archive, cleaned_archive, snr, flux ->
+            [
+                [
+                    id: meta.id,
+                    pulsar: meta.pulsar,
+                    project_short: meta.project_short,
+                    utc: meta.utc,
+                    beam: meta.beam,
+                    band: meta.band,
+                    dur: meta.dur,
+                    cal_loc: meta.cal_loc,
+                    pipe_id: meta.pipe_id,
+                    nchans: meta.nchans,
+                    npols: meta.npols,
+                    // Two new additions
+                    snr: snr,
+                    flux: flux,
+                ],
+                ephemeris,
+                template,
+                raw_archive,
+                cleaned_archive,
+            ]
+        }
 
-    // Other images using matplotlib and psrplot and make a results.json
-    GENERATE_IMAGE_RESULTS( DM_RM_CALC.out )
-    // Upload images and results
-    if ( params.upload ) {
-        UPLOAD_RESULTS( GENERATE_IMAGE_RESULTS.out )
+    if ( !params.use_prev_ar ) {
+        // Calculate the DM with tempo2 or pdmp
+        DM_RM_CALC( files_and_meta )
+
+        // Other images using matplotlib and psrplot and make a results.json
+        GENERATE_IMAGE_RESULTS( DM_RM_CALC.out )
+        // Upload images and results
+        if ( params.upload ) {
+            UPLOAD_RESULTS( GENERATE_IMAGE_RESULTS.out )
+        }
+
     }
 
     // Grab all ephemeris and template pairs for each pulsar
