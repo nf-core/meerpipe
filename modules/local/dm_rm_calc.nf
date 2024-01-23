@@ -18,7 +18,6 @@
 process DM_RM_CALC {
     tag "$meta.id"
     label 'process_high'
-    label 'cpu'
     label 'meerpipe'
 
     // TODO nf-core: List required Conda package(s).

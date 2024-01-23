@@ -12,13 +12,10 @@
 //               unless there is a run-time, storage advantage in implementing in this way
 //               e.g. it's ok to have a single module for bwa to output BAM instead of SAM:
 //                 bwa mem | samtools view -B -T ref.fasta
-// TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
-//               list (`[]`) instead of a file can be used to work around this issue.
 
 process PSRADD_CALIBRATE_CLEAN {
     tag "$meta.id"
     label 'process_high'
-    label 'cpu'
     label 'meerpipe'
     label 'scratch'
 

@@ -18,7 +18,6 @@
 process GENERATE_IMAGE_RESULTS {
     tag "$meta.id"
     label 'process_high'
-    label 'cpu'
     label 'meerpipe'
 
     publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/images", mode: 'copy', pattern: "{c,t,r}*png"

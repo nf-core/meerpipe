@@ -17,7 +17,7 @@
 
 process DECIMATE {
     tag "$meta.id"
-    label 'cpu'
+    label 'process_high'
     label 'meerpipe'
     label 'scratch'
 
