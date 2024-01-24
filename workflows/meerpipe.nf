@@ -303,8 +303,8 @@ workflow MEERPIPE {
                 }
                 .groupTuple()
                 .map {
-                    id, meta, ephem -> [ meta[0], ephem ]
-                }.view()
+                    id, meta, ephem -> [ meta[0], ephem[0] ]
+                }
         )
     }
 }
