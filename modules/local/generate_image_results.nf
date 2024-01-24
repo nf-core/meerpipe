@@ -34,13 +34,7 @@ process GENERATE_IMAGE_RESULTS {
     //     'biocontainers/YOUR-TOOL-HERE' }"
 
     input:
-    // TODO nf-core: Where applicable all sample-specific information e.g. "id", "single_end", "read_group"
-    //               MUST be provided as an input via a Groovy Map called "meta".
-    //               This information may not be required in some instances e.g. indexing reference genome files:
-    //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
-    // TODO nf-core: Where applicable please provide/convert compressed files as input/output
-    //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), val(snr), path(dm_results)
+    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path(dm_results)
 
     output:
     tuple val(meta), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
@@ -96,7 +90,8 @@ process GENERATE_IMAGE_RESULTS {
         --par_file ${ephemeris} \\
         --template ${template} \\
         --rcvr ${meta.band} \\
-        --snr ${snr} \\
+        --snr ${meta.snr} \\
+        --flux ${meta.flux} \\
         --dm_file ${dm_results} \\
         ${ template.baseName == "no_template" ? "--raw_only" : "" }
     """

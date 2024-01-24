@@ -250,8 +250,8 @@ workflow MEERPIPE {
             .filter { it[2].baseName != "no_template" }
             // Only send it the paths and vals it needs
             .map {
-                meta, ephemeris, template, raw_archive, cleaned_archive, snr ->
-                [ meta, cleaned_archive, snr ]
+                meta, ephemeris, template, raw_archive, cleaned_archive ->
+                [ meta, cleaned_archive ]
             }
     )
 

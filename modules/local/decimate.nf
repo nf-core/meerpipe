@@ -40,7 +40,7 @@ process DECIMATE {
     //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(cleaned_archive), val(snr)
+    tuple val(meta), path(cleaned_archive)
 
     output:
     tuple val(meta), path("${meta.pulsar}_${meta.utc}_zap*t.ar")
@@ -70,7 +70,7 @@ process DECIMATE {
     for nchan in ${meta.nchans.join(' ')}; do
         if ${params.use_max_nsub}; then
             # Calculate nsub to get desired TOA S/N
-            max_nsub=\$(python -c "import math; print(math.floor(1/\$nchan * (${snr}/${params.tos_sn}) ** 2))")
+            max_nsub=\$(python -c "import math; print(math.floor(1/\$nchan * (${meta.snr}/${params.tos_sn}) ** 2))")
 
             input_nsub=\$(vap -c nsub \${clean_ar} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
             if [ \$max_nsub -gt \$input_nsub ]; then
