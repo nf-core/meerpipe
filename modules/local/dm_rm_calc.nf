@@ -93,6 +93,8 @@ process DM_RM_CALC {
         # Remove dm derivatives
         sed '/^DM[1-9]/d' ${ephemeris} > ${ephemeris}.dm
         echo "MODE 1" >>  ${ephemeris}.dm
+        # Remove zero S/N TOAs
+        sed -i '/-snr 0 /d' dm.tim
         # Fit for DM
         tempo2 -nofit -fit DM -set START 40000 -set FINISH 99999 -f ${ephemeris}.dm -outpar ${ephemeris}.dmfit dm.tim
 
