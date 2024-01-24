@@ -39,7 +39,7 @@ process DM_RM_CALC {
     tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive)
 
     output:
-    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path("${meta.pulsar}_${meta.utc}_dm_rm_fit.txt")
+    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path("${meta.pulsar}_${meta.utc}_dm_rm_fit.json")
 
     when:
     task.ext.when == null || task.ext.when
@@ -58,13 +58,17 @@ process DM_RM_CALC {
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
      if ( task.attempt > 2 || template.baseName == "no_template" )
         """
-        echo "DM: None"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "ERR: None"    >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "EPOCH: None"  >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "CHI2R: None"  >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "TRES: None"   >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "RM: None"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "RM_ERR: None" >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
+        cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
+        {
+            "DM": "None",
+            "ERR": "None",
+            "EPOCH": "None",
+            "CHI2R": "None",
+            "TRES": "None",
+            "RM": "None",
+            "RM_ERR": "None"
+        }
+        EOF
         """
     else if ( Float.valueOf(meta.snr) > 20.0 )
         """
@@ -114,13 +118,17 @@ process DM_RM_CALC {
         RM=\$(echo     \$rm_results | cut -d '/' -f 1 | cut -d ' ' -f 1)
         RM_ERR=\$(echo \$rm_results | cut -d '/' -f 2 | cut -d ' ' -f 2)
 
-        echo "DM: \${DM}"         >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "ERR: \${ERR}"       >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "EPOCH: \${EPOCH}"   >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "CHI2R: \${CHI2R}"   >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "TRES: \${TRES}"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "RM: \${RM}"         >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "RM_ERR: \${RM_ERR}" >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
+        cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
+        {
+            "DM": "\${DM}",
+            "ERR": "\${ERR}",
+            "EPOCH": "\${EPOCH}",
+            "CHI2R": "\${CHI2R}",
+            "TRES": "\${TRES}",
+            "RM": "\${RM}",
+            "RM_ERR": "\${RM_ERR}"
+        }
+        EOF
         """
     else
         """
@@ -131,16 +139,18 @@ process DM_RM_CALC {
         DM=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 5)
         ERR=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 6)
         EPOCH=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 2)
-        CHI2R=None
-        TRES=None
 
-        echo "DM: \${DM}"       >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "ERR: \${ERR}"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "EPOCH: \${EPOCH}" >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "CHI2R: \${CHI2R}" >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "TRES: \${TRES}"   >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "RM: None"         >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-        echo "RM_ERR: None"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
+        cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
+        {
+            "DM": "\${DM}",
+            "ERR": "\${ERR}",
+            "EPOCH": "\${EPOCH}",
+            "CHI2R": "None",
+            "TRES": "None",
+            "RM": "None",
+            "RM_ERR": "None"
+        }
+        EOF
         """
 
     stub:
@@ -151,12 +161,16 @@ process DM_RM_CALC {
     //               Simple example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bcftools/annotate/main.nf#L47-L63
     //               Complex example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bedtools/split/main.nf#L38-L54
     """
-    echo "DM: None"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-    echo "ERR: None"    >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-    echo "EPOCH: None"  >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-    echo "CHI2R: None"  >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-    echo "TRES: None"   >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-    echo "RM: None"     >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
-    echo "RM_ERR: None" >> ${meta.pulsar}_${meta.utc}_dm_rm_fit.txt
+    cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
+    {
+        "DM": "None",
+        "ERR": "None",
+        "EPOCH": "None",
+        "CHI2R": "None",
+        "TRES": "None",
+        "RM": "None",
+        "RM_ERR": "None"
+    }
+    EOF
     """
 }
