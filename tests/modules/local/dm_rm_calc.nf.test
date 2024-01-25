@@ -1,0 +1,170 @@
+nextflow_process {
+
+    name "Test Process DM_RM_CALC"
+    script "modules/local/dm_rm_calc.nf"
+    process "DM_RM_CALC"
+
+    test("J1534-5334_2023-05-05-01:07:10_1: period: slow   DM: low    obs_len: short ") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1534-5334_2023-05-05-01:07:10_1",
+                            pulsar: "J1534-5334",
+                            utc: "2023-05-05-01:07:10",
+                            beam: 1,
+                            dur: 116.53766938317756,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: 259.778747558594,
+                        ],
+                    "$baseDir/tests/test_data/J1534-5334.par",
+                    "$baseDir/tests/test_data/J1534-5334.std",
+                    "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_raw.ar",
+                    "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_zap.ar",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.get(0)[0][5]).json["DM"] == "25.261153459584751843"
+            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.03045464532755817050"
+            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59400"
+            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "1.2658"
+            assert path(process.out.get(0)[0][5]).json["TRES"] == "122.370"
+            assert path(process.out.get(0)[0][5]).json["RM"] == "22.9168"
+            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "11.93"
+        }
+    }
+
+    test("J1410-7404_2020-09-05-10:00:47_2: period: medium DM: medium obs_len: short ") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1410-7404_2020-09-05-10:00:47_2",
+                            pulsar: "J1410-7404",
+                            utc: "2020-09-05-10:00:47",
+                            beam: 2,
+                            dur: 89.60730437383191,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: 80.4668273925781,
+                        ],
+                    "$baseDir/tests/test_data/J1410-7404.par",
+                    "$baseDir/tests/test_data/J1410-7404.std",
+                    "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_raw.ar",
+                    "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_zap.ar",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.get(0)[0][5]).json["DM"] == "54.238033166402631433"
+            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00601313752705323005"
+            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59400"
+            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "0.5028"
+            assert path(process.out.get(0)[0][5]).json["TRES"] == "21.420"
+            assert path(process.out.get(0)[0][5]).json["RM"] == "-4.17085"
+            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+        }
+    }
+
+    test("J0437-4715_2019-03-26-16:26:02_1: period: MSP    DM: low    obs_len: short ") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0437-4715_2019-03-26-16:26:02_1",
+                            pulsar: "J0437-4715",
+                            utc: "2019-03-26-16:26:02",
+                            beam: 1,
+                            dur: 15.999999999999988,
+                            cal_loc: "/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones",
+                            band: "LBAND",
+                            snr: 9052.873046875,
+                        ],
+                    "$baseDir/tests/test_data/J0437-4715.par",
+                    "$baseDir/tests/test_data/J0437-4715.std",
+                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_raw.ar",
+                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_zap.ar",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.get(0)[0][5]).json["DM"] == "2.6420830395015044592"
+            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00011356905934389115"
+            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "54500"
+            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "1.2503"
+            assert path(process.out.get(0)[0][5]).json["TRES"] == "0.246"
+            assert path(process.out.get(0)[0][5]).json["RM"] == "0.657496"
+            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "0.1"
+        }
+    }
+
+    test("J0514-4408_2020-02-21-17:50:16_1: period: medium DM: low    obs_len: medium no template") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0514-4408_2020-02-21-17:50:16_1",
+                            pulsar: "J0514-4408",
+                            utc: "2020-02-21-17:50:16",
+                            beam: 1,
+                            dur: 1800.00,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: "None",
+                        ],
+                    "$baseDir/tests/test_data/J0514-4408.par",
+                    "$baseDir/tests/test_data/no_template.std",
+                    "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_raw.ar",
+                    "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_zap.ar",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.get(0)[0][5]).json["DM"] == "None"
+            assert path(process.out.get(0)[0][5]).json["ERR"] == "None"
+            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "None"
+            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "None"
+            assert path(process.out.get(0)[0][5]).json["TRES"] == "None"
+            assert path(process.out.get(0)[0][5]).json["RM"] == "None"
+            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+        }
+    }
+}
