@@ -116,7 +116,12 @@ process DM_RM_CALC {
         TRES=\$(grep  "^TRES "    ${ephemeris}.dmfit | awk '{print \$2}')
         rm_results=\$(grep "Best RM is" rmfit_output.txt | cut -d ':' -f 2)
         RM=\$(echo     \$rm_results | cut -d '/' -f 1 | cut -d ' ' -f 1)
-        RM_ERR=\$(echo \$rm_results | cut -d '/' -f 2 | cut -d ' ' -f 2)
+        if grep -q "+/-" "rmfit_output.txt"; then
+            RM_ERR=\$(echo \$rm_results | cut -d '/' -f 2 | cut -d ' ' -f 2)
+        else
+            echo "rmfit do not return an uncertainty so recording it as None"
+            RM_ERR=None
+        fi
 
         cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
         {
