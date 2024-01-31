@@ -145,7 +145,7 @@ process PSRADD_CALIBRATE_CLEAN {
         echo "Flux calibrate"
         # Create a time and polarisation scruchned profile
         pam -Tp -e tp ${meta.pulsar}_${meta.utc}_raw.ar
-        fluxcal \\
+        fluxcal_meerkat \\
             --psr_name ${meta.pulsar} \\
             --obs_name ${meta.utc} \\
             --obs_header ${params.input_dir}/${meta.pulsar}/${meta.utc}/${meta.beam}/*/obs.header \\
@@ -164,7 +164,7 @@ process PSRADD_CALIBRATE_CLEAN {
         echo "Flux calibrate"
         # Create a time and polarisation scruchned profile
         pam -Tp -e tp ${meta.pulsar}_${meta.utc}_zap.ar
-        fluxcal \\
+        fluxcal_meerkat \\
             --psr_name ${meta.pulsar} \\
             --obs_name ${meta.utc} \\
             --obs_header ${params.input_dir}/${meta.pulsar}/${meta.utc}/${meta.beam}/*/obs.header \\
