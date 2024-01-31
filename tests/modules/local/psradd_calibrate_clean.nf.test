@@ -31,7 +31,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 259.778747558594 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 259.026916503906 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 4.045 )
         }
     }
 
@@ -62,7 +63,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 184.475296020508 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 184.704879760742 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.638 )
         }
     }
 
@@ -93,7 +95,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 736.987731933594 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 735.183410644531 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 2.255 )
         }
     }
 
@@ -124,7 +127,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 80.4668273925781 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 80.4666442871094 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.785 )
         }
     }
 
@@ -155,7 +159,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 9052.873046875 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 9125.9140625 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 255.052 )
         }
     }
 
@@ -186,7 +191,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 1485.11828613281 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1483.97985839844)
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.759 )
         }
     }
 
@@ -248,7 +254,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 1602.21850585938 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1601.12414550781 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 6.290 )
         }
     }
 
@@ -279,7 +286,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 885.953430175781 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 889.089660644531 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.745 )
         }
     }
 
@@ -310,7 +318,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert Float.valueOf(process.out.get(0)[0][5]) >= 833.4445 * 0.99
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 885.314331054688 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.207 )
         }
     }
 
