@@ -58,12 +58,12 @@ process GENERATE_RESIDUALS {
     for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
         for nchan in ${meta.nchans.join(' ')}; do
             echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
-            psrdb toa download ${meta.pulsar} --project ${meta.project_short} \$min_or_max_sub --nchan \$nchan
+            psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} \$min_or_max_sub --nchan \$nchan
             echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
             tempo2_wrapper.sh toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim ${ephemeris}
             if [ -f "toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual" ]; then
                 echo -e "\\nUpload the residuals\\n--------------------------\\n"
-                psrdb residual create toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual
+                psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}.tim.residual
             fi
         done
     done
