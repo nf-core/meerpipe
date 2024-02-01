@@ -224,6 +224,40 @@ nextflow_process {
         then {
             assert process.success
             assert process.out.get(0)[0][5] == "None"
+            assert process.out.get(0)[0][6] == "None"
+        }
+    }
+
+    test("J0737-3039A_2023-09-25-04:28:00_4: period: MSP    DM: medium obs_len: medium") {
+        tag "new"
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0737-3039A_2023-09-25-04:28:00_4",
+                            pulsar: "J0737-3039A",
+                            utc: "2023-09-25-04:28:00",
+                            beam: 4,
+                            dur: 1801.45,
+                            cal_loc: "",
+                        ],
+                    "$baseDir/tests/test_data/J0737-3039A.par",
+                    "$baseDir/tests/test_data/J0737-3039A.std",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 302.942993164062 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.0 ) // Zero because it is an SBAND obs
         }
     }
 

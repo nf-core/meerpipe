@@ -100,9 +100,9 @@ process PSRADD_CALIBRATE_CLEAN {
         fi
     done
     echo "Combine all the file chunks"
-    psradd -E ${ephemeris} -o ${meta.pulsar}_${meta.utc}_raw.ar *_chunk.raw
+    psradd -o ${meta.pulsar}_${meta.utc}_raw.ar *_chunk.raw
     if [ "\$raw_only" == "false" ]; then
-        psradd -E ${ephemeris} -o ${meta.pulsar}_${meta.utc}_zap.ar *_chunk.zap
+        psradd -o ${meta.pulsar}_${meta.utc}_zap.ar *_chunk.zap
     fi
 
 
