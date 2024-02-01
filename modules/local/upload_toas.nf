@@ -101,12 +101,16 @@ process UPLOAD_TOAS {
             dmcorrected = False
 
         # Work out if this is the minimum or maximum number of subints
-        nchan = toa_file.split("_zap.")[-1].split("ch")[0]
-        nsub = toa_file.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]
-        toas_same_nchan = glob("*_zap." + nchan + "ch*" + toa_file.split(".ar.")[1])
+        if "${params.chop_edge}" == "true":
+            file_name_end = "_zap_chopped."
+        else:
+            file_name_end = "_zap."
+        nchan = toa_file.split(file_name_end)[-1].split("ch")[0]
+        nsub = toa_file.split(f"{file_name_end}{nchan}ch1p")[-1].split("t.ar")[0]
+        toas_same_nchan = glob(f"*{file_name_end}{nchan}ch*{toa_file.split('.ar.')[1]}")
         nsubs_list = []
         for toa in toas_same_nchan:
-            nsubs_list.append(int(toa.split("_zap."+nchan+"ch1p")[-1].split("t.ar")[0]))
+            nsubs_list.append(int(toa.split(f"{file_name_end}{nchan}ch1p")[-1].split("t.ar")[0]))
         minimum_nsubs = False
         maximum_nsubs = False
         if max(nsubs_list) == int(nsub):
