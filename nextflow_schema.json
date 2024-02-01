@@ -94,6 +94,12 @@
                     "description": "Use first and last 8 second subints of observation archives.",
                     "fa_icon": "fas fa-arrows-alt-h"
                 },
+                "chop_edge": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-cut",
+                    "description": "Remove edge frequency channels of the archive before decimating."
+                },
                 "use_max_nsub": {
                     "type": "boolean",
                     "fa_icon": "fas fa-ellipsis-h",
@@ -112,7 +118,7 @@
                 },
                 "nchans": {
                     "type": "string",
-                    "default": "1,4,16",
+                    "default": 1,
                     "description": "Comma separated list of nchans to frequency scrunch the data into",
                     "fa_icon": "fas fa-align-justify"
                 },
@@ -214,7 +220,7 @@
                 "max_memory": {
                     "type": "string",
                     "description": "Maximum amount of memory that can be requested for any single job.",
-                    "default": "128.GB",
+                    "default": "250.GB",
                     "fa_icon": "fas fa-memory",
                     "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
                     "hidden": true,
@@ -225,7 +231,7 @@
                     "description": "Maximum amount of time that can be requested for any single job.",
                     "default": "240.h",
                     "fa_icon": "far fa-clock",
-                    "pattern": "^(\\d+\\.?\\s*(s|m|h|day)\\s*)+$",
+                    "pattern": "^(\\d+\\.?\\s*(s|m|h|d|day)\\s*)+$",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
                 }
@@ -238,6 +244,9 @@
             "description": "Less common options for the pipeline, typically set in a config file.",
             "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
+                "show_hidden_params": {
+                    "type": "boolean"
+                },
                 "help": {
                     "type": "boolean",
                     "description": "Display help text.",
@@ -249,10 +258,6 @@
                     "description": "Display version and exit.",
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
-                },
-                "type": {
-                    "type": "string",
-                    "default": "meertime"
                 },
                 "publish_dir_mode": {
                     "type": "string",
@@ -290,26 +295,12 @@
                     "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
                     "hidden": true
                 },
-                "tracedir": {
-                    "type": "string",
-                    "description": "Directory to keep pipeline Nextflow logs and reports.",
-                    "default": "${params.outdir}/pipeline_info",
-                    "fa_icon": "fas fa-cogs",
-                    "hidden": true
-                },
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
                     "default": true,
                     "fa_icon": "fas fa-check-square",
                     "hidden": true
-                },
-                "show_hidden_params": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-eye-slash",
-                    "description": "Show all params when using `--help`",
-                    "hidden": true,
-                    "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
                 },
                 "validationShowHiddenParams": {
                     "type": "boolean",
@@ -321,7 +312,20 @@
                 },
                 "schema_ignore_params": {
                     "type": "string",
-                    "default": "genomes",
+                    "default": "genomes,validationSchemaIgnoreParams,manifest,validation-schema-ignore-params",
+                    "hidden": true
+                },
+                "tracedir": {
+                    "type": "string",
+                    "default": "/fred/oz005/users/nswainst/meerpipe_testing_outputs/pipeline_info",
+                    "hidden": true
+                },
+                "validationFailUnrecognisedParams": {
+                    "type": "boolean",
+                    "hidden": true
+                },
+                "validationLenientMode": {
+                    "type": "boolean",
                     "hidden": true
                 }
             }
