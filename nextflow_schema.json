@@ -94,6 +94,12 @@
                     "description": "Use first and last 8 second subints of observation archives.",
                     "fa_icon": "fas fa-arrows-alt-h"
                 },
+                "chop_edge": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-cut",
+                    "description": "Remove edge frequency channels of the archive before decimating."
+                },
                 "use_max_nsub": {
                     "type": "boolean",
                     "fa_icon": "fas fa-ellipsis-h",
@@ -238,6 +244,9 @@
             "description": "Less common options for the pipeline, typically set in a config file.",
             "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
+                "show_hidden_params": {
+                    "type": "boolean"
+                },
                 "help": {
                     "type": "boolean",
                     "description": "Display help text.",
@@ -249,10 +258,6 @@
                     "description": "Display version and exit.",
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
-                },
-                "type": {
-                    "type": "string",
-                    "default": "meertime"
                 },
                 "publish_dir_mode": {
                     "type": "string",
@@ -277,14 +282,6 @@
                     "fa_icon": "fas fa-remove-format",
                     "hidden": true
                 },
-                "max_multiqc_email_size": {
-                    "type": "string",
-                    "description": "File size limit when attaching MultiQC reports to summary emails.",
-                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
-                    "default": "25.MB",
-                    "fa_icon": "fas fa-file-upload",
-                    "hidden": true
-                },
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
@@ -298,37 +295,12 @@
                     "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
                     "hidden": true
                 },
-                "multiqc_config": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "Custom config file to supply to MultiQC.",
-                    "fa_icon": "fas fa-cog",
-                    "hidden": true
-                },
-                "multiqc_logo": {
-                    "type": "string",
-                    "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
-                    "fa_icon": "fas fa-image",
-                    "hidden": true
-                },
-                "multiqc_methods_description": {
-                    "type": "string",
-                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
-                    "fa_icon": "fas fa-cog"
-                },
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
                     "default": true,
                     "fa_icon": "fas fa-check-square",
                     "hidden": true
-                },
-                "validationShowHiddenParams": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-eye-slash",
-                    "description": "Show all params when using `--help`",
-                    "hidden": true,
-                    "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
                 },
                 "validationShowHiddenParams": {
                     "type": "boolean",
@@ -341,6 +313,19 @@
                 "schema_ignore_params": {
                     "type": "string",
                     "default": "genomes",
+                    "hidden": true
+                },
+                "tracedir": {
+                    "type": "string",
+                    "default": "/fred/oz005/users/nswainst/meerpipe_testing_outputs/pipeline_info",
+                    "hidden": true
+                },
+                "validationFailUnrecognisedParams": {
+                    "type": "boolean",
+                    "hidden": true
+                },
+                "validationLenientMode": {
+                    "type": "boolean",
                     "hidden": true
                 }
             }

@@ -90,7 +90,6 @@ process MANIFEST_CONFIG_DUMP {
             "input_dir": "${params.input_dir}",
             "outdir": "${params.outdir}",
             "email": "${params.email}",
-            "type": "${params.type}",
             "ephemeris": "${params.ephemeris}",
             "template": "${params.template}",
         },
