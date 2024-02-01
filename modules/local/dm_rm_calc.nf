@@ -56,7 +56,7 @@ process DM_RM_CALC {
     //               using the Nextflow "task" variable e.g. "--threads $task.cpus"
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
-     if ( task.attempt > 2 || template.baseName == "no_template" )
+    if ( task.attempt > 2 || template.baseName == "no_template" )
         """
         cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
         {
