@@ -118,7 +118,7 @@
                 },
                 "nchans": {
                     "type": "string",
-                    "default": "1,4,16",
+                    "default": 1,
                     "description": "Comma separated list of nchans to frequency scrunch the data into",
                     "fa_icon": "fas fa-align-justify"
                 },
@@ -220,7 +220,7 @@
                 "max_memory": {
                     "type": "string",
                     "description": "Maximum amount of memory that can be requested for any single job.",
-                    "default": "128.GB",
+                    "default": "250.GB",
                     "fa_icon": "fas fa-memory",
                     "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
                     "hidden": true,
@@ -312,7 +312,7 @@
                 },
                 "schema_ignore_params": {
                     "type": "string",
-                    "default": "genomes",
+                    "default": "genomes,validationSchemaIgnoreParams,manifest,validation-schema-ignore-params",
                     "hidden": true
                 },
                 "tracedir": {
