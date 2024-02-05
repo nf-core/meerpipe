@@ -6,58 +6,93 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+A processing pipeline to convert raw pulsar archives from the MeerKAT telescopes into timing data and other useful products.
 
-## Samplesheet input
+## Archive input
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
-
-```bash
---input '[path to samplesheet file]'
-```
-
-### Multiple runs of the same sample
-
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
+The pipeline works out what observations are available based on the input filters and then find the files in the directory structure.
+The directory structure is defined as:
 
 ```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
+${params.input_dir}/${meta.pulsar}/${meta.utc}/${meta.beam}/*/*.ar
 ```
 
-### Full samplesheet
-
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
-
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
+This structure is based on what is currently available on the Swinburne's OzSTAR supercomputer.
 
 ```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+/fred/oz005/timing/<pulsar>/<utc>/<beam>/<freq>
 ```
 
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
+where:
 
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+ - `<pulsar>`: A pulsar J name (e.g. J0437-4715)
+ - `<utc>`: The start time of the observation in UTC and the format "YYYY-MM-DD-HH:MM:SS.SS" (e.g. 2023-12-11-03:23:30)
+ - `<beam>`: The beam ID (the PTUSE server, e.g. 4)
+ - `<freq>`: The centre frequency in MHz (e.g. 1284)
+
+ These observations you wish to process can be defined using either the arguments on the command line ([Filtering observations](/usage#filtering-observations)) or with a observation file for more advanced combinations of observations ([Observation file](usage#observation-file)).
+
+
+### Filtering observations
+
+The pipeline can filter observations based on the [Observation selection](/parameters#observation-selection) parameters.
+Some common ways to use the filters include processing all observations for a single pulsar:
+
+```console
+--pulsar <pulsar>
+```
+
+or to process a single observation, you can use the same date value for `--utcs` and `--utce`:
+
+```console
+--pulsar <pulsar> --utcs <utc> --utce <utc>
+```
+
+### Observation file
+
+The observation file is a CSV file with the following columns:
+
+| Column    | Description |
+| --------- | ----------- |
+| Obs ID | The observation's database ID |
+| Pulsar Jname | The pulsar's Jname |
+| UTC Start | The start time of the observation at UTC in the format "YYYY-MM-DD-HH:MM:SS.SS"  |
+| Project Short Name | The abbreviated name of the observing project (e.g. PTA, TPA, Relbin or GC) |
+| Beam # | An integer from 1 to 4 of the PTUSE machine ID that preprocessed the observations|
+| Observing Band | The frequency band of the observation (e.g UHF, LBAND or SBAND_<0-4>) |
+| Duration (s) | Duration of the observation in seconds |
+| Calibration Location | The path to the calibration file if it exists |
+
+For example, one of the observation files used for testing looks like this:
+
+```console
+Obs ID,Pulsar Jname,UTC Start,Project Short Name,Beam #,Observing Band,Duration (s),Calibration Location
+35409,J1534-5334,2023-05-05-01:07:10,TPA,1,LBAND,116.53766938317756,None
+9017,J1418-3921,2020-08-08-11:55:30,TPA,4,LBAND,233.7823401869157,None
+2954,J1013-5934,2020-01-04-20:29:13,TPA,1,LBAND,457.50813667289714,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-01-04-18:56:54.jones
+10173,J1410-7404,2020-09-05-10:00:47,TPA,2,LBAND,89.60730437383191,None
+173,J0437-4715,2019-03-26-16:26:02,PTA,1,LBAND,15.999999999999988,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones
+12929,J1919+0021,2020-11-30-14:55:13,TPA,4,LBAND,1318.9994574953269,None
+3608,J0514-4408,2020-02-21-17:50:16,TPA,1,LBAND,1799.9996901682246,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-02-21-17:32:22.jones
+16650,J0900-3144,2021-04-20-14:47:54,RelBin,3,UHF,2047.541722352941,None
+1314,J1811-2405,2019-09-24-13:51:57,RelBin,1,LBAND,7205.578322542057,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-09-24-11:31:01.jones
+1558,J0955-6150,2019-10-07-02:26:56,RelBin,1,LBAND,14402.595572037384,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-10-07-02:16:00.jones
+```
+
+This is difficult for a human to create which is why this file is often created with the [`psrdb`](https://psrdb.readthedocs.io/en/latest/cli.html#observation) command line tool.
+For example you can use psrdb to download all observations where the processing failed like so:
+
+```console
+psrdb observation download --incomplete --main_project MeerTIME --obs_type fold
+```
+
 
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/meerpipe --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+nextflow run nf-core/meerpipe --outdir ./results --pulsar J1410-7404 --utcs 2020-09-05-10:00:47 --utce 2020-09-05-10:00:47 -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
