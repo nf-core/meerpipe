@@ -62,7 +62,7 @@ process DECIMATE {
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
     if [ "${params.chop_edge}" == "true" ]; then
-        chop_edge_channels ${cleaned_archive}
+        chop_edge_channels --band ${meta.band} ${cleaned_archive}
         clean_ar=${cleaned_archive.getName().replace("_zap", "_zap_chopped")}
     else
         clean_ar=${cleaned_archive}
