@@ -69,20 +69,9 @@ process DECIMATE {
     fi
     for nchan in ${meta.nchans.join(' ')}; do
         if ${params.use_max_nsub}; then
+            nsub=\$( vap -c nsub  \$clean_ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
             # Calculate nsub to get desired TOA S/N
-            max_nsub=\$(python -c "import math; print(math.floor(1/\$nchan * (${meta.snr}/${params.tos_sn}) ** 2))")
-
-            input_nsub=\$(vap -c nsub \${clean_ar} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-            if [ \$max_nsub -gt \$input_nsub ]; then
-                # Greater than input nsub so set input as max
-                max_nsub=\$input_nsub
-            fi
-            if [ \$max_nsub -eq 0 ]; then
-                # Not enough SN so only make a fully time scrunched
-                nsubs="1"
-            else
-                nsubs="1 \$max_nsub"
-            fi
+            nsubs=\$(calc_max_nsub --sn ${meta.snr} --nchan \${nchan} --duration ${meta.dur} --input_nsub \${nsub} --sn_desired ${params.tos_sn})
         else
             nsubs="1"
         fi
