@@ -53,6 +53,7 @@ process OBS_LIST {
     from psrdb.tables.pipeline_run import PipelineRun
     from psrdb.tables.template import Template
     from psrdb.tables.ephemeris import Ephemeris
+    from psrdb.tables.pulsar_fold_result import PulsarFoldResult
     from psrdb.graphql_client import GraphQLClient
     from psrdb.utils.other import setup_logging, get_rest_api_id, get_graphql_id, decode_id
     from ephem_template.python_grabber import grab_ephemeris, grab_template
@@ -60,12 +61,15 @@ process OBS_LIST {
     # PSRDB setup
     logger = setup_logging(level=logging.DEBUG)
     client = GraphQLClient("${psrdb_url}", "${psrdb_token}", logger=logger)
-    obs_client       = Observation(client)
     pipe_run_client  = PipelineRun(client)
     template_client  = Template(client)
     ephemeris_client = Ephemeris(client)
+    obs_client       = Observation(client)
     obs_client.get_dicts = True
     obs_client.set_use_pagination(True)
+    pfr_client       = PulsarFoldResult(client)
+    pfr_client.get_dicts = True
+    pfr_client.set_use_pagination(True)
 
     if "${obs_csv}" in ("", "null"):
         if "${pulsars}" in ("", "null"):
@@ -209,6 +213,23 @@ process OBS_LIST {
         obs_df.at[index, 'pipe_id']   = pipe_id
         obs_df.at[index, 'ephemeris'] = ephemeris
         obs_df.at[index, 'template']  = template
+
+    if "${params.use_prev_ar}" == "true":
+        obs_df['sn'] = 0.
+        obs_df['flux'] = 0.
+        obs_df['raw_archive'] = 'empty_raw.ar'
+        obs_df['clean_archive'] = ''
+        for index, obs in obs_df.iterrows():
+            pfr_data = pfr_client.list(
+                pulsar=obs["Pulsar Jname"],
+                mainProject="MeerTIME",
+                utcStart=obs["UTC Start"],
+                beam=obs["Beam #"],
+            )
+            print(pfr_data)
+            obs_df.at[index, 'sn']   = pfr_data[0]['pipelineRun']['sn']
+            obs_df.at[index, 'flux'] = pfr_data[0]['pipelineRun']['flux']
+            obs_df.at[index, 'clean_archive'] = f"${params.outdir}/{obs['Pulsar Jname']}/{obs['UTC Start']}/{obs['Beam #']}/{obs['Pulsar Jname']}_{obs['UTC Start']}_zap.ar"
 
     # Write out results
     obs_df.drop('Obs ID', axis=1, inplace=True)

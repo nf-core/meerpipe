@@ -162,68 +162,87 @@ workflow MEERPIPE {
         MANIFEST_CONFIG_DUMP.out,
     )
 
-    // Covert csv into a tupe of the meta map and the files
-    obs_data = OBS_LIST.out.splitCsv()
-    .map {
-        pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template ->
-        [
+    if ( params.use_prev_ar) {
+        // Covert csv into a tupe of the meta map and the files
+        files_and_meta = OBS_LIST.out.splitCsv()
+        .map {
+            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template, snr, flux, raw_archive, cleaned_archive ->
             [
-                id: "${pulsar}_${utc}_${beam}",
-                pulsar: pulsar,
-                utc: utc,
-                beam: beam,
-                project_short: project_short,
-                band: band,
-                dur: dur,
-                cal_loc: cal_loc,
-                pipe_id: pipe_id,
-                nchans: params.nchans.split(',').collect { it.toInteger() },
-                npols:params.npols.split(',').collect  { it.toInteger() },
-            ],
-            ephemeris,
-            template,
-        ]
-    }
-
-    if ( params.use_prev_ar ) {
-        GRAB_PREVIOUS_ARCHIVE_SNR( obs_data.filter { it[2].split('/')[-1] != "no_template.std" } )
-
-        files_and_meta = GRAB_PREVIOUS_ARCHIVE_SNR.out
+                [
+                    id: "${pulsar}_${utc}_${beam}",
+                    pulsar: pulsar,
+                    utc: utc,
+                    beam: beam,
+                    project_short: project_short,
+                    band: band,
+                    dur: dur,
+                    cal_loc: cal_loc,
+                    pipe_id: pipe_id,
+                    nchans: params.nchans.split(',').collect { it.toInteger() },
+                    npols:params.npols.split(',').collect  { it.toInteger() },
+                    snr: snr,
+                    flux: flux,
+                ],
+                file(ephemeris),
+                file(template),
+                file(raw_archive),
+                file(cleaned_archive),
+            ]
+        }
     } else {
+        // Covert csv into a tupe of the meta map and the files
+        obs_data = OBS_LIST.out.splitCsv()
+        .map {
+            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template ->
+            [
+                [
+                    id: "${pulsar}_${utc}_${beam}",
+                    pulsar: pulsar,
+                    utc: utc,
+                    beam: beam,
+                    project_short: project_short,
+                    band: band,
+                    dur: dur,
+                    cal_loc: cal_loc,
+                    pipe_id: pipe_id,
+                    nchans: params.nchans.split(',').collect { it.toInteger() },
+                    npols:params.npols.split(',').collect  { it.toInteger() },
+                ],
+                ephemeris,
+                template,
+            ]
+        }
+
         // Combine archives,flux calibrate Clean of RFI with MeerGaurd
         PSRADD_CALIBRATE_CLEAN( obs_data )
 
         files_and_meta = PSRADD_CALIBRATE_CLEAN.out
-    }
-
-    files_and_meta = files_and_meta
-        .map {
-            meta, ephemeris, template, raw_archive, cleaned_archive, snr, flux ->
-            [
+            .map {
+                meta, ephemeris, template, raw_archive, cleaned_archive, snr, flux ->
                 [
-                    id: meta.id,
-                    pulsar: meta.pulsar,
-                    project_short: meta.project_short,
-                    utc: meta.utc,
-                    beam: meta.beam,
-                    band: meta.band,
-                    dur: meta.dur,
-                    cal_loc: meta.cal_loc,
-                    pipe_id: meta.pipe_id,
-                    nchans: meta.nchans,
-                    npols: meta.npols,
-                    // Two new additions
-                    snr: snr,
-                    flux: flux,
-                ],
-                ephemeris,
-                template,
-                raw_archive,
-                cleaned_archive,
-            ]
-        }
+                    [
+                        id: meta.id,
+                        pulsar: meta.pulsar,
+                        project_short: meta.project_short,
+                        utc: meta.utc,
+                        beam: meta.beam,
+                        band: meta.band,
+                        dur: meta.dur,
+                        cal_loc: meta.cal_loc,
+                        pipe_id: meta.pipe_id,
+                        nchans: meta.nchans,
+                        npols: meta.npols,
+                        // Two new additions
+                        snr: snr,
+                        flux: flux,
+                    ],
+                    ephemeris,
+                    template,
+                    raw_archive,
+                    cleaned_archive,
+                ]
+            }
 
-    if ( !params.use_prev_ar ) {
         // Calculate the DM with tempo2 or pdmp
         DM_RM_CALC( files_and_meta )
 
@@ -238,8 +257,8 @@ workflow MEERPIPE {
 
     // Grab all ephemeris and template pairs for each pulsar
     GRAB_ALL_PAIRS(
-        obs_data.map {
-            meta, ephemeris, template  ->
+        files_and_meta.map {
+            meta, ephemeris, template, raw_archive, clean_archive  ->
             [ meta.pulsar ]
         }
         .unique()
