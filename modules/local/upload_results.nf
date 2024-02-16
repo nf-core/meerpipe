@@ -122,22 +122,8 @@ process UPLOAD_RESULTS {
             exit(1)
 
     # Read in results JSON
-    if raw_only:
-        results_dict = {
-            "percent_rfi_zapped": None,
-            "dm": None,
-            "dm_err": None,
-            "dm_epoch": None,
-            "dm_chi2r": None,
-            "dm_tres": None,
-            "rm": None,
-            "rm_err": None,
-            "sn": None,
-            "flux": None,
-        }
-    else:
-        with open("results.json", "r") as f:
-            results_dict = json.load(f)
+    with open("results.json", "r") as f:
+        results_dict = json.load(f)
     # Update pipeline run as completed (will update pulsarFoldResult)
     pipeline_run_response = pipeline_run_client.update(
         ${meta.pipe_id},

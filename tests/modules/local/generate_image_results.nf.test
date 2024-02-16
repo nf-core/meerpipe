@@ -1,0 +1,256 @@
+nextflow_process {
+
+    name "Test Process GENERATE_IMAGE_RESULTS"
+    script "modules/local/generate_image_results.nf"
+    process "GENERATE_IMAGE_RESULTS"
+
+    test("J1534-5334_2023-05-05-01:07:10_1: period: slow   DM: low    obs_len: short ") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1534-5334_2023-05-05-01:07:10_1",
+                            pulsar: "J1534-5334",
+                            utc: "2023-05-05-01:07:10",
+                            beam: 1,
+                            dur: 116.53766938317756,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: 259.135803222656,
+                            flux: 4.045,
+                        ],
+                    "$baseDir/tests/test_data/J1534-5334.par",
+                    "$baseDir/tests/test_data/J1534-5334.std",
+                    "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_raw.ar",
+                    "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_zap.ar",
+                    "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            // Input values equal output results
+            assert TestUtils.floats_within_six_digits(path(process.out.get(0)[0][4]).json["sn"],   259.135803222656)
+            assert TestUtils.floats_within_six_digits(path(process.out.get(0)[0][4]).json["flux"], 4.045)
+            // Check input json values output to output json
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["DM"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["ERR"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_err"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["EPOCH"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_epoch"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["CHI2R"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_chi2r"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["TRES"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_tres"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["RM"].toFloat(),
+                path(process.out.get(0)[0][4]).json["rm"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json").json["RM_ERR"].toFloat(),
+                path(process.out.get(0)[0][4]).json["rm_err"].toFloat(),
+            )
+        }
+    }
+
+    test("J1410-7404_2020-09-05-10:00:47_2: period: medium DM: medium obs_len: short ") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1410-7404_2020-09-05-10:00:47_2",
+                            pulsar: "J1410-7404",
+                            utc: "2020-09-05-10:00:47",
+                            beam: 2,
+                            dur: 89.60730437383191,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: 80.4582138061523,
+                            flux: 0.785,
+                        ],
+                    "$baseDir/tests/test_data/J1410-7404.par",
+                    "$baseDir/tests/test_data/J1410-7404.std",
+                    "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_raw.ar",
+                    "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_zap.ar",
+                    "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            // Input values equal output results
+            assert TestUtils.floats_within_six_digits(path(process.out.get(0)[0][4]).json["sn"],   80.4582138061523)
+            assert TestUtils.floats_within_six_digits(path(process.out.get(0)[0][4]).json["flux"], 0.785)
+            // Check input json values output to output json
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["DM"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["ERR"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_err"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["EPOCH"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_epoch"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["CHI2R"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_chi2r"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["TRES"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_tres"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["RM"].toFloat(),
+                path(process.out.get(0)[0][4]).json["rm"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json").json["RM_ERR"].toFloat(),
+                path(process.out.get(0)[0][4]).json["rm_err"].toFloat(),
+            )
+        }
+    }
+
+    test("J0437-4715_2019-03-26-16:26:02_1: period: MSP    DM: low    obs_len: short ") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0437-4715_2019-03-26-16:26:02_1",
+                            pulsar: "J0437-4715",
+                            utc: "2019-03-26-16:26:02",
+                            beam: 1,
+                            dur: 15.999999999999988,
+                            cal_loc: "/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones",
+                            band: "LBAND",
+                            snr: 9066.0419921875,
+                            flux: 255.054,
+                        ],
+                    "$baseDir/tests/test_data/J0437-4715.par",
+                    "$baseDir/tests/test_data/J0437-4715.std",
+                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_raw.ar",
+                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_zap.ar",
+                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            // Input values equal output results
+            assert TestUtils.floats_within_six_digits(path(process.out.get(0)[0][4]).json["sn"],   9066.0419921875)
+            assert TestUtils.floats_within_six_digits(path(process.out.get(0)[0][4]).json["flux"], 255.054)
+            // Check input json values output to output json
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["DM"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["ERR"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_err"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["EPOCH"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_epoch"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["CHI2R"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_chi2r"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["TRES"].toFloat(),
+                path(process.out.get(0)[0][4]).json["dm_tres"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["RM"].toFloat(),
+                path(process.out.get(0)[0][4]).json["rm"].toFloat(),
+            )
+            assert TestUtils.floats_within_six_digits(
+                path("$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json").json["RM_ERR"].toFloat(),
+                path(process.out.get(0)[0][4]).json["rm_err"].toFloat(),
+            )
+        }
+    }
+
+    test("J0514-4408_2020-02-21-17:50:16_1: period: medium DM: low    obs_len: medium no template") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0514-4408_2020-02-21-17:50:16_1",
+                            pulsar: "J0514-4408",
+                            utc: "2020-02-21-17:50:16",
+                            beam: 1,
+                            dur: 1800.00,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: "None",
+                            flux: "None",
+                        ],
+                    "$baseDir/tests/test_data/J0514-4408.par",
+                    "$baseDir/tests/test_data/no_template.std",
+                    "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_raw.ar",
+                    "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_zap.ar",
+                    "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_dm_rm_fit.json",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            // Output results all nulls
+            assert path(process.out.get(0)[0][4]).json["sn"]       == null
+            assert path(process.out.get(0)[0][4]).json["flux"]     == null
+            assert path(process.out.get(0)[0][4]).json["dm"]       == null
+            assert path(process.out.get(0)[0][4]).json["dm_err"]   == null
+            assert path(process.out.get(0)[0][4]).json["dm_epoch"] == null
+            assert path(process.out.get(0)[0][4]).json["dm_chi2r"] == null
+            assert path(process.out.get(0)[0][4]).json["dm_tres"]  == null
+            assert path(process.out.get(0)[0][4]).json["rm"]       == null
+            assert path(process.out.get(0)[0][4]).json["rm_err"]   == null
+        }
+    }
+}
