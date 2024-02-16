@@ -1,0 +1,22 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                outdir  = "$outputDir"
+                obs_csv = "$baseDir/tests/test_data/obs_variety_of_pulsars.csv"
+                upload  = false
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}
