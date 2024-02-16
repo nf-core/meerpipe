@@ -30,7 +30,6 @@ process OBS_LIST {
     val ephemeris
     val template
     val outdir
-    path manifest
 
     output:
     path "processing_jobs.csv", emit: out_csv
@@ -43,6 +42,7 @@ process OBS_LIST {
     #!/usr/bin/env python
 
     import os
+    import re
     import json
     import base64
     import logging
@@ -57,6 +57,30 @@ process OBS_LIST {
     from psrdb.graphql_client import GraphQLClient
     from psrdb.utils.other import setup_logging, get_rest_api_id, get_graphql_id, decode_id
     from ephem_template.python_grabber import grab_ephemeris, grab_template
+
+    # Get pipeline config from the params and manifest
+    params_string = '${params.all()}'
+    pipeline_config = {}
+    # Extracting key-value pairs from the manifest
+    manifest_match = re.search(r'--manifest "(.*?)"', params_string)
+    if manifest_match:
+        manifest_string = manifest_match.group(1)
+        manifest_list = re.findall(r'(\\w+):([^,]+)', manifest_string)
+        manifest_dict = dict(manifest_list)
+        pipeline_config['manifest'] = manifest_dict
+        # Remove the manifest string from the params string
+        params_string = params_string.replace(manifest_string, "").replace("--manifest", "")
+    # Extracting key-value pairs from the params string
+    pairs = params_string.split('--')
+    for pair in pairs:
+        if pair.strip():  # Skip empty strings
+            key_value = pair.strip().split(maxsplit=1)
+            if len(key_value) == 2:
+                key, value = key_value
+            else:
+                key = key_value[0]
+                value = ""
+            pipeline_config[key.strip()] = value.strip()
 
     # PSRDB setup
     logger = setup_logging(level=logging.DEBUG)
@@ -191,17 +215,14 @@ process OBS_LIST {
         if "${upload}" == "true":
             ephemeris_id = pulsar_ephem_template[pulsar][band]["ephemeris_id"]
             template_id  = pulsar_ephem_template[pulsar][band]["template_id"]
-            with open("${manifest}", 'r') as file:
-                # Load the JSON data
-                pipeline_config = json.load(file)
 
             pipe_run_data = pipe_run_client.create(
                 obs['Obs ID'],
                 ephemeris_id,
                 template_id,
-                pipeline_config["pipeline_name"],
-                pipeline_config["pipeline_description"],
-                pipeline_config["pipeline_version"],
+                pipeline_config['manifest']["name"],
+                pipeline_config['manifest']["description"],
+                pipeline_config['manifest']["version"],
                 "Running",
                 "${outdir}",
                 pipeline_config,

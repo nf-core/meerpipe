@@ -58,71 +58,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 */
 
 
-process MANIFEST_CONFIG_DUMP {
-    // Create a json of all the parameters used in this run
-    label 'psrdb'
-
-    output:
-    path "manifest.json"
-
-    """
-    #!/usr/bin/env python
-
-    import json
-
-    manifest = {
-        "pipeline_name": "${params.manifest.name}",
-        "pipeline_description": "${params.manifest.description}",
-        "pipeline_version": "${params.manifest.version}",
-        "created_by": "${workflow.userName}",
-        "configuration": {
-            "utcs": "${params.utcs}",
-            "utce": "${params.utce}",
-            "project": "${params.project}",
-            "obs_csv": "${params.obs_csv}",
-            "pulsar": "${params.pulsar}",
-            "use_edge_subints": "${params.use_edge_subints}",
-            "tos_sn": "${params.tos_sn}",
-            "nchans": "${params.nchans}",
-            "npols": "${params.npols}",
-            "upload": "${params.upload}",
-            "psrdb_url": "${params.psrdb_url}",
-            "input_dir": "${params.input_dir}",
-            "outdir": "${params.outdir}",
-            "email": "${params.email}",
-            "ephemeris": "${params.ephemeris}",
-            "template": "${params.template}",
-        },
-    }
-
-    with open("manifest.json", "w") as out_file:
-        json.dump(manifest, out_file, indent=4)
-
-    """
-}
-
-
-
-process GRAB_PREVIOUS_ARCHIVE_SNR {
-    label 'process_high'
-    label 'meerpipe'
-
-    input:
-    tuple val(meta), path(ephemeris), path(template)
-
-    output:
-    tuple val(meta), path(ephemeris), path(template), path("empty_raw.ar"), path("${meta.pulsar}_${meta.utc}_zap.ar"), env(SNR), env(FLUX)
-
-    """
-    touch empty_raw.ar
-    ln -s ${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/${meta.pulsar}_${meta.utc}_zap.ar ${meta.pulsar}_${meta.utc}_zap.ar
-    pam -FTp -e FTp ${meta.pulsar}_${meta.utc}_zap.ar
-    SNR=\$(psrstat -c snr=pdmp -c snr ${meta.pulsar}_${meta.utc}_zap.FTp | cut -d '=' -f 2)
-    FLUX=\$(pdv -f ${meta.pulsar}_${meta.utc}_zap.FTp | tail -n 1 | tr -s ' ' | cut -d ' ' -f 7)
-    """
-}
-
-
 // Info required for completion email and summary
 def multiqc_report = []
 
@@ -139,13 +74,12 @@ include { GENERATE_RESIDUALS     } from '../modules/local/generate_residuals'
 
 
 workflow MEERPIPE {
-    MANIFEST_CONFIG_DUMP()
-
     if ( params.obs_csv == "" ) {
         obs_csv = ""
     } else {
         obs_csv = Channel.fromPath(params.obs_csv)
     }
+
     // Use PSRDB to work out which obs to process
     OBS_LIST(
         params.pulsar,
@@ -159,7 +93,6 @@ workflow MEERPIPE {
         params.ephemeris,
         params.template,
         params.outdir,
-        MANIFEST_CONFIG_DUMP.out,
     )
 
     if ( params.use_prev_ar) {
