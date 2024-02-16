@@ -62,15 +62,8 @@ process GENERATE_TOAS {
     """
     # Loop over each DECIMATEd archive
     for ar in ${decimated_archives.join(' ')}; do
-        if [[ \$ar == *"ch4p"* ]]; then
-            # Skip if it is a full Stokes archive
-            continue
-        fi
-
-        # Grab archive nchan and nsub
+        # Grab archive and template nchan
         nchan=\$(vap -c nchan \$ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-        nsub=\$( vap -c nsub  \$ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-        # Grab template nchan
         tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
 
         # Use portrait mode if template has more frequency channels

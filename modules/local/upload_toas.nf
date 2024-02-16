@@ -106,11 +106,12 @@ process UPLOAD_TOAS {
         else:
             file_name_end = "_zap."
         nchan = toa_file.split(file_name_end)[-1].split("ch")[0]
-        nsub = toa_file.split(f"{file_name_end}{nchan}ch1p")[-1].split("t.ar")[0]
-        toas_same_nchan = glob(f"*{file_name_end}{nchan}ch*{toa_file.split('.ar.')[1]}")
+        npol = toa_file.split(f"{file_name_end}{nchan}ch")[-1].split("p")[0]
+        nsub = toa_file.split(f"{file_name_end}{nchan}ch{npol}p")[-1].split("t.ar")[0]
+        toas_same_nchan = glob(f"*{file_name_end}{nchan}ch{npol}p*{toa_file.split('.ar.')[1]}")
         nsubs_list = []
         for toa in toas_same_nchan:
-            nsubs_list.append(int(toa.split(f"{file_name_end}{nchan}ch1p")[-1].split("t.ar")[0]))
+            nsubs_list.append(int(toa.split(f"{file_name_end}{nchan}ch{npol}p")[-1].split("t.ar")[0]))
         minimum_nsubs = False
         maximum_nsubs = False
         if max(nsubs_list) == int(nsub):
@@ -118,7 +119,7 @@ process UPLOAD_TOAS {
         if min(nsubs_list) == int(nsub):
             minimum_nsubs = True
 
-        logger.info(f"Uploading Toa file {toa_file} with maximum_nsubs={maximum_nsubs} and minimum_nsubs={minimum_nsubs}")
+        logger.info(f"Uploading Toa file {toa_file} with maximum_nsubs={maximum_nsubs}, minimum_nsubs={minimum_nsubs}, nchan={nchan}, npol={npol}, nsub={nsub}")
         with open(toa_file, "r") as f:
             toa_lines = f.readlines()
             toa_response = toa_client.create(
@@ -130,6 +131,8 @@ process UPLOAD_TOAS {
                 dmcorrected,
                 minimum_nsubs,
                 maximum_nsubs,
+                npol,
+                nchan,
             )
             if toa_response.status_code not in (200, 201):
                 logger.error("Failed to upload TOA")
