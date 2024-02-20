@@ -56,7 +56,7 @@ process OBS_LIST {
     from psrdb.tables.pulsar_fold_result import PulsarFoldResult
     from psrdb.graphql_client import GraphQLClient
     from psrdb.utils.other import setup_logging, get_rest_api_id, get_graphql_id, decode_id
-    from ephem_template.python_grabber import grab_ephemeris, grab_template
+    from ephem_template.python_grabber import grab_ephemeris, grab_template, NoFilesFound
 
     # Get pipeline config from the params and manifest
     params_string = '${params.all()}'
@@ -154,13 +154,13 @@ process OBS_LIST {
 
         # Grab ephermis and templates
         if "${ephemeris}" in ("", "null"):
-            ephemeris = grab_ephemeris(pulsar, project)
+            ephemeris = grab_ephemeris(pulsar, project, fold=True)
         else:
             ephemeris = "${ephemeris}"
         if "${template}" in ("", "null"):
             try:
-                template = grab_template(pulsar, project, band)
-            except ValueError:
+                template = grab_template(pulsar, project, band, fold=True)
+            except NoFilesFound:
                 template = os.path.join(os.getcwd(), "no_template.std")
                 with open(template, 'w'):
                     pass # Make an empty file
@@ -175,8 +175,9 @@ process OBS_LIST {
             if template == os.path.join(os.getcwd(), "no_template.std"):
                 ephem_template["template_id"] = -1
             else:
-                template_band = template.split("/")[-3]
-                template_project = template.split("/")[-2]
+                template_band = template.replace("/fold/", "/").split("/")[-3]
+                template_project = template.replace("/fold/", "/").split("/")[-2]
+                logger.info(f"Creating template with band: {template_band} project: {template_project} template: {template}")
                 template_response = template_client.create(
                     pulsar,
                     template_band,
@@ -186,7 +187,8 @@ process OBS_LIST {
                 logger.debug(template_response)
                 ephem_template["template_id"] = get_rest_api_id(template_response, logging.getLogger(__name__))
             # Get or create ephemeris
-            ephemeris_project = ephemeris.split("/")[-2]
+            ephemeris_project = ephemeris.replace("/fold/", "/").split("/")[-2]
+            logger.info(f"Creating ephemeris with project: {ephemeris_project} ephemeris: {ephemeris}")
             ephemeris_response = ephemeris_client.create(
                 pulsar,
                 ephemeris,

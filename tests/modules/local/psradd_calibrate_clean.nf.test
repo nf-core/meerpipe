@@ -164,6 +164,39 @@ nextflow_process {
         }
     }
 
+    test("J0711+0931_2020-07-04-09:47:10_3: period: slow   DM: medium obs_len: medium") {
+        tag "new"
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J0711+0931_2020-07-04-09:47:10_3",
+                            pulsar: "J0711+0931",
+                            utc: "2020-07-04-09:47:10",
+                            beam: 3,
+                            dur: 637.8824840373778,
+                            cal_loc: "",
+                        ],
+                    "$baseDir/tests/test_data/J0711+0931_fold.par",
+                    "$baseDir/tests/test_data/J0711+0931.std",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 205.802658081055 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.516 )
+        }
+    }
+
     test("J1919+0021_2020-11-30-14:55:13_4: period: slow   DM: medium obs_len: medium") {
         when {
             params {
@@ -229,7 +262,6 @@ nextflow_process {
     }
 
     test("J0737-3039A_2023-09-25-04:28:00_4: period: MSP    DM: medium obs_len: medium") {
-        tag "new"
         when {
             params {
                 outdir = "$outputDir"
