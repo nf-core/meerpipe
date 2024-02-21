@@ -190,13 +190,12 @@ workflow MEERPIPE {
 
     // Grab all ephemeris and template pairs for each pulsar
     GRAB_ALL_PAIRS(
-        files_and_meta.map {
-            meta, ephemeris, template, raw_archive, clean_archive  ->
-            [ meta.pulsar ]
-        }
-        .unique()
-        .collect()
-        .flatten()
+        OBS_LIST.out
+            .splitCsv()
+            .map { [ it[0] ] }
+            .unique()
+            .collect()
+            .flatten()
     )
     pulsar_project_ephem_template = GRAB_ALL_PAIRS.out.splitCsv()
 
