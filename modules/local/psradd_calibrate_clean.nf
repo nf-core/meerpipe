@@ -80,29 +80,17 @@ process PSRADD_CALIBRATE_CLEAN {
         fi
     fi
 
-    echo "Combine the archives and clean the archives in 200 file (~25 min) chunks"
-    echo \${archives} | xargs -n 200 | while read -r archives_chunk; do
-        first_file=\$(echo "\$archives_chunk" | awk '{print \$1}')
-        last_file=\$(echo "\$archives_chunk" | awk '{print \$NF}')
-        chunk_name="\$(basename \$first_file)_\$(basename \$last_file)"
-        echo "Combine the archives of chunk \${chunk_name//.ar}"
-        psradd \\
-            -E ${ephemeris} \\
-            -o ${meta.pulsar}_\${chunk_name//.ar}_chunk.raw \\
-            \${archives_chunk}
-        if [ "\$raw_only" == "false" ]; then
-            echo "Clean the archive of chunk \${chunk_name//.ar}"
-            ls -lrt
-            clean_archive.py \\
-                -a ${meta.pulsar}_\${chunk_name//.ar}_chunk.raw \\
-                -T \${std_template} \\
-                -o ${meta.pulsar}_\${chunk_name//.ar}_chunk.zap
-        fi
-    done
-    echo "Combine all the file chunks"
-    psradd -o ${meta.pulsar}_${meta.utc}_raw.ar *_chunk.raw
+    echo "Combine the archives"
+    psradd \\
+        -E ${ephemeris} \\
+        -o ${meta.pulsar}_${meta.utc}_raw.ar \\
+        \${archives}
     if [ "\$raw_only" == "false" ]; then
-        psradd -o ${meta.pulsar}_${meta.utc}_zap.ar *_chunk.zap
+        echo "Clean the archive"
+        clean_archive.py \\
+            -a ${meta.pulsar}_${meta.utc}_raw.ar \\
+            -T \${std_template} \\
+            -o ${meta.pulsar}_${meta.utc}_zap.ar
     fi
 
 

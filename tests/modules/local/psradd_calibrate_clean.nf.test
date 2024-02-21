@@ -31,7 +31,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 259.026916503906 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 259.029266357422 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 4.045 )
         }
     }
@@ -63,7 +63,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 184.704879760742 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 184.709213256836 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.638 )
         }
     }
@@ -95,7 +95,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 735.183410644531 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 735.17626953125 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 2.255 )
         }
     }
@@ -127,7 +127,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 80.4666442871094 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 80.4701843261719 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.785 )
         }
     }
@@ -159,7 +159,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 9125.9140625 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 9127.01953125 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 255.052 )
         }
     }
@@ -224,7 +224,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1483.97985839844)
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1484.63439941406 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.759 )
         }
     }
@@ -288,7 +288,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 302.942993164062 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 296.615692138672 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.0 ) // Zero because it is an SBAND obs
         }
     }
@@ -320,8 +320,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1601.12414550781 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 6.290 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1602.49243164062 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 6.289 )
         }
     }
 
@@ -352,8 +352,8 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 889.089660644531 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.745 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 883.721984863281 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.747 )
         }
     }
 
@@ -384,7 +384,7 @@ nextflow_process {
         }
         then {
             assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 885.314331054688 )
+            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 836.70751953125 )
             assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.207 )
         }
     }

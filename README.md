@@ -22,7 +22,7 @@ The pipeline is described by the following flow diagram and bullet points:
 
 1. [OBS_LIST](modules/local/obs_list.nf): Queries the MeerTime database for observations that match the input filters (described in the usage section), download their metadata and find the corresponding ephemerides and template files from the [private repository](https://ozgrav.github.io/meerkat_pulsar_docs/ephem_template/).
 2. [PSRADD_CALIBRATE_CLEAN](modules/local/psradd_calibrate_clean.nf): Prepares a cleaned and calibrated archive in the following steps:
-    1. Combine the raw archives, except for the first and last ~8 second subint, into ~25 minute chunks and clean them of RFI with [MeerGuard](https://github.com/danielreardon/MeerGuard)
+    1. Combine the raw archives, except for the first and last ~8 second subint, and clean them of RFI with [MeerGuard](https://github.com/danielreardon/MeerGuard)
     2. Combine the cleaned chunks into a single file and calibrate the polarisation with [pac](https://psrchive.sourceforge.net/manuals/pac/) using the Jones matrices provided by the South African Radio Astronomy Observatory (SARAO) ([Serylak et al. 2020](https://ui.adsabs.harvard.edu/abs/2021MNRAS.505.4483S/abstract))
     3. Apply the rotation measure from the [ATNF](https://www.atnf.csiro.au/research/pulsar/psrcat/) and apply it with [pam](https://psrchive.sourceforge.net/manuals/pam/)
     4. Correct for delays using [dlyfix](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/dlyfix.py)
