@@ -99,7 +99,7 @@ workflow MEERPIPE {
         // Covert csv into a tupe of the meta map and the files
         files_and_meta = OBS_LIST.out.splitCsv()
         .map {
-            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template, snr, flux, raw_archive, cleaned_archive ->
+            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template, n_obs, snr, flux, raw_archive, cleaned_archive ->
             [
                 [
                     id: "${pulsar}_${utc}_${beam}",
@@ -113,6 +113,7 @@ workflow MEERPIPE {
                     pipe_id: pipe_id,
                     nchans: params.nchans.split(',').collect { it.toInteger() },
                     npols:params.npols.split(',').collect  { it.toInteger() },
+                    n_obs: n_obs,
                     snr: snr,
                     flux: flux,
                 ],
@@ -126,7 +127,7 @@ workflow MEERPIPE {
         // Covert csv into a tupe of the meta map and the files
         obs_data = OBS_LIST.out.splitCsv()
         .map {
-            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template ->
+            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template, n_obs ->
             [
                 [
                     id: "${pulsar}_${utc}_${beam}",
@@ -140,6 +141,7 @@ workflow MEERPIPE {
                     pipe_id: pipe_id,
                     nchans: params.nchans.split(',').collect { it.toInteger() },
                     npols:params.npols.split(',').collect  { it.toInteger() },
+                    n_obs: n_obs,
                 ],
                 ephemeris,
                 template,
@@ -165,6 +167,7 @@ workflow MEERPIPE {
                         pipe_id: meta.pipe_id,
                         nchans: meta.nchans,
                         npols: meta.npols,
+                        n_obs: meta.n_obs,
                         // Two new additions
                         snr: snr,
                         flux: flux,
@@ -238,6 +241,7 @@ workflow MEERPIPE {
                         pipe_id: meta.pipe_id,
                         nchans: meta.nchans,
                         npols: meta.npols,
+                        n_obs: meta.n_obs,
                     ],
                     ephemeris,
                     template,
@@ -255,9 +259,9 @@ workflow MEERPIPE {
                 .out
                 .map {
                     meta, ephem ->
-                    [ "${meta.pulsar}_${meta.project_short}", meta, ephem ]
+                    [ groupKey( "${meta.pulsar}_${meta.project_short}", meta.n_obs.toInteger() ), meta, ephem ]
                 }
-                .groupTuple()
+                .groupTuple( remainder: true )
                 .map {
                     id, meta, ephem -> [ meta[0], ephem[0] ]
                 }

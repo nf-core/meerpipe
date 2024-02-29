@@ -205,6 +205,7 @@ process OBS_LIST {
     obs_df['pipe_id'] = ''
     obs_df['ephemeris'] = ''
     obs_df['template'] = ''
+    obs_df['n_obs'] = 0
     for index, obs in obs_df.iterrows():
         pulsar = obs['Pulsar Jname']
         band   = obs['Observing Band']
@@ -236,6 +237,9 @@ process OBS_LIST {
         obs_df.at[index, 'pipe_id']   = pipe_id
         obs_df.at[index, 'ephemeris'] = ephemeris
         obs_df.at[index, 'template']  = template
+
+        # Count observations with the same pulsar
+        obs_df.at[index, 'n_obs']     = len(obs_df[obs_df['Pulsar Jname'] == pulsar])
 
     if "${params.use_prev_ar}" == "true":
         obs_df['sn'] = 0.
