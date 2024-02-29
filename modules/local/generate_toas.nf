@@ -17,7 +17,7 @@
 
 process GENERATE_TOAS {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
     label 'psrchive'
 
     publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/timing/${meta.project_short}", mode: 'copy', pattern: "*.{tim,par,std}"
