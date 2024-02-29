@@ -57,6 +57,10 @@ process GENERATE_RESIDUALS {
     # Loop over each of the TOA filters
     for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
         for nchan in ${meta.nchans.join(' ')}; do
+            if ((nchan > ${params.max_nchan_upload})); then
+                echo -e "\\nSkipping the calculation and upload for residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
+                continue
+            fi
             for npol in ${meta.npols.join(' ')}; do
                 echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan} \${npol}\\n--------------------------\\n"
                 psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} \$min_or_max_sub --nchan \$nchan --npol \$npol
