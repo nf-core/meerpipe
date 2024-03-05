@@ -44,6 +44,7 @@ process OBS_LIST {
     import os
     import re
     import json
+    import time
     import base64
     import logging
     import pandas as pd
@@ -212,25 +213,42 @@ process OBS_LIST {
         ephemeris = pulsar_ephem_template[pulsar][band]["ephemeris"]
         template  = pulsar_ephem_template[pulsar][band]["template"]
 
-        logger.info(f"Setting up ID: {obs['Obs ID']} pulsar: {pulsar} band: {band} template: {template} ephemeris: {ephemeris}")
+        logger.info(f"Setting up {index+1}/{len(obs_df)} ID: {obs['Obs ID']} pulsar: {pulsar} band: {band} template: {template} ephemeris: {ephemeris}")
 
         # Set job as running
         if "${upload}" == "true":
             ephemeris_id = pulsar_ephem_template[pulsar][band]["ephemeris_id"]
             template_id  = pulsar_ephem_template[pulsar][band]["template_id"]
 
-            pipe_run_data = pipe_run_client.create(
-                obs['Obs ID'],
-                ephemeris_id,
-                template_id,
-                pipeline_config['manifest']["name"],
-                pipeline_config['manifest']["description"],
-                pipeline_config['manifest']["version"],
-                "Running",
-                "${outdir}",
-                pipeline_config,
-            )
-            pipe_id = get_graphql_id(pipe_run_data, "pipeline_run", logging.getLogger(__name__))
+            try:
+                pipe_run_data = pipe_run_client.create(
+                    obs['Obs ID'],
+                    ephemeris_id,
+                    template_id,
+                    pipeline_config['manifest']["name"],
+                    pipeline_config['manifest']["description"],
+                    pipeline_config['manifest']["version"],
+                    "Running",
+                    "${outdir}",
+                    pipeline_config,
+                )
+                pipe_id = get_graphql_id(pipe_run_data, "pipeline_run", logging.getLogger(__name__))
+            except ValueError as e:
+                logger.error(f"Failed to create pipeline run for {obs['Obs ID']}: {e}")
+                logger.info(f"Waiting 30 seconds and trying again")
+                time.sleep(30)
+                pipe_run_data = pipe_run_client.create(
+                    obs['Obs ID'],
+                    ephemeris_id,
+                    template_id,
+                    pipeline_config['manifest']["name"],
+                    pipeline_config['manifest']["description"],
+                    pipeline_config['manifest']["version"],
+                    "Running",
+                    "${outdir}",
+                    pipeline_config,
+                )
+                pipe_id = get_graphql_id(pipe_run_data, "pipeline_run", logging.getLogger(__name__))
         else:
             # No uploading so don't make a processing item
             pipe_id = None
