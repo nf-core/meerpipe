@@ -56,6 +56,7 @@ process UPLOAD_RESULTS {
     """
     #!/usr/bin/env python
 
+    import os
     import json
     import time
     import logging
@@ -98,7 +99,8 @@ process UPLOAD_RESULTS {
     image_data.append( ("raw_bandpass.png",       'bandpass',    'high', False) )
     image_data.append( ("raw_SNR_cumulative.png", 'snr-cumul',   'high', False) )
     image_data.append( ("raw_SNR_single.png",     'snr-single',  'high', False) )
-    image_data.append( ("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png", 'dynamic-spectrum', 'high', False) )
+    if os.path.exists("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png"):
+        image_data.append( ("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png", 'dynamic-spectrum', 'high', False) )
     if not raw_only:
         image_data.append( ("cleaned_profile_ftp.png",    'profile',     'high', True ) )
         image_data.append( ("cleaned_profile_fts.png",    'profile-pol', 'high', True ) )
@@ -106,7 +108,8 @@ process UPLOAD_RESULTS {
         image_data.append( ("cleaned_phase_freq.png",     'phase-freq',  'high', True ) )
         image_data.append( ("cleaned_bandpass.png",       'bandpass',    'high', True ) )
         image_data.append( ("cleaned_SNR_cumulative.png", 'snr-cumul',   'high', True ) )
-        image_data.append( ("${meta.pulsar}_${meta.utc}_zap.ar.dynspec.png", 'dynamic-spectrum', 'high', True ) )
+        if os.path.exists("${meta.pulsar}_${meta.utc}_zap.ar.dynspec.png"):
+            image_data.append( ("${meta.pulsar}_${meta.utc}_zap.ar.dynspec.png", 'dynamic-spectrum', 'high', True ) )
 
     # Upload images
     for image_path, image_type, resolution, cleaned in image_data:
