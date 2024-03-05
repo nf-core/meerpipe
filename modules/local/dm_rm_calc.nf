@@ -75,7 +75,7 @@ process DM_RM_CALC {
         echo -e "\\nCreate a max channel archive\\n----------------------------------"
         # Calculate nchan to get desired TOA S/N and make sure it is a factor of the archive channels
         arnchan=\$(vap -c nchan ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-        nchan=\$(python -c "import math; raw_nchan=math.floor( (${meta.snr}/10.) ** 2); print(next((factor for factor in range(\$arnchan + 1, 2, -1) if \$arnchan % factor == 0 and factor < raw_nchan and factor <= 64)))")
+        nchan=\$(python -c "import math; raw_nchan=math.floor( (${meta.snr}/10.) ** 2); print(next((factor for factor in range(\$arnchan + 1, 2, -1) if \$arnchan % factor == 0 and factor <= raw_nchan and factor <= 64)))")
         if [ \$nchan -gt 16 ]; then
             nchan=16
         fi
