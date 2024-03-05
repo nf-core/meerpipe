@@ -77,6 +77,19 @@ process GENERATE_IMAGE_RESULTS {
         pam -Fp -e cleanFp ${cleaned_archive}
         # Create a frequency, time and polarisation scrunched file for flux calc
         pam -FTp -e cleanFTp ${cleaned_archive}
+
+        echo "Check if you need to change the template bins"
+        obs_nbin=\$(vap -c nbin ${cleaned_archive} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        std_nbin=\$(vap -c nbin ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        if [ "\$obs_nbin" == "\$std_nbin" ]; then
+            std_template=${template}
+        else
+            echo "Making a new template with right number of bins"
+            pam -b \$((std_nbin / obs_nbin)) -e new_std ${template}
+            std_template=*new_std
+        fi
+        psrflux -s \${std_template} -e dynspec ${raw_archive}
+        psrflux -s \${std_template} -e dynspec ${cleaned_archive}
     fi
 
     # Create matplotlib images and dump the results calculations into a results.json file
