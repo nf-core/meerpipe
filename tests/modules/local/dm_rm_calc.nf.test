@@ -167,4 +167,86 @@ nextflow_process {
             assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
         }
     }
+
+    test("J1904+0451_2020-08-26-17:24:01_3: period: medium DM: low    obs_len: medium pdmp") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1904+0451_2020-08-26-17:24:01_3",
+                            pulsar: "J1904+0451",
+                            utc: "2020-08-26-17:24:01",
+                            beam: 3,
+                            dur: 1016.000,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: 17.3289585113525,
+                        ],
+                    "$baseDir/tests/test_data/J1904+0451.par",
+                    "$baseDir/tests/test_data/J1904+0451.std",
+                    "$baseDir/tests/test_data/J1904+0451_2020-08-26-17:24:01_3/J1904+0451_2020-08-26-17:24:01_raw.ar",
+                    "$baseDir/tests/test_data/J1904+0451_2020-08-26-17:24:01_3/J1904+0451_2020-08-26-17:24:01_zap.ar",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.get(0)[0][5]).json["DM"] == "182.678"
+            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.069"
+            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59087.735280"
+            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "None"
+            assert path(process.out.get(0)[0][5]).json["TRES"] == "None"
+            assert path(process.out.get(0)[0][5]).json["RM"] == "None"
+            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+        }
+    }
+
+    test("J1658-5324_2022-02-09-02:47:59_1: period: medium DM: low    obs_len: medium no RM width error") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1658-5324_2022-02-09-02:47:59_1",
+                            pulsar: "J1658-5324",
+                            utc: "2020-08-26-17:24:01",
+                            beam: 1,
+                            dur: 319.55,
+                            cal_loc: "",
+                            band: "LBAND",
+                            snr: 20.5,
+                        ],
+                    "$baseDir/tests/test_data/J1658-5324.par",
+                    "$baseDir/tests/test_data/J1658-5324.std",
+                    "$baseDir/tests/test_data/J1658-5324_2022-02-09-02:47:59_1/J1658-5324_2022-02-09-02:47:59_raw.ar",
+                    "$baseDir/tests/test_data/J1658-5324_2022-02-09-02:47:59_1/J1658-5324_2022-02-09-02:47:59_zap.ar",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert path(process.out.get(0)[0][5]).json["DM"] == "30.828810512928090128"
+            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00023992226050556316"
+            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59000"
+            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "0.0072"
+            assert path(process.out.get(0)[0][5]).json["TRES"] == "0.282"
+            assert path(process.out.get(0)[0][5]).json["RM"] == "-26.188"
+            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+        }
+    }
 }

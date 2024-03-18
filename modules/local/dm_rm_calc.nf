@@ -106,7 +106,7 @@ process DM_RM_CALC {
         lower_rm=\$(echo "\$input_rm - 34" | bc -l)
         higher_rm=\$(echo "\$input_rm + 34" | bc -l)
         echo -e "\\nFit for RM from \$lower_rm - \$higher_rm \\n----------------------------------"
-        rmfit -D -m \$lower_rm,\$higher_rm,200 ${meta.pulsar}_${meta.utc}_zap.rmcalc -K /PNG > rmfit_output.txt
+        rmfit -D -m \$lower_rm,\$higher_rm,200 ${meta.pulsar}_${meta.utc}_zap.rmcalc -K /PNG > rmfit_output.txt 2>&1
 
         echo -e "\\nGrab the outputs and write it to a file\\n----------------------------------"
         DM=\$(grep    "^DM "      ${ephemeris}.dmfit | awk '{print \$2}')
@@ -114,13 +114,19 @@ process DM_RM_CALC {
         EPOCH=\$(grep "^DMEPOCH " ${ephemeris}.dmfit | awk '{print \$2}')
         CHI2R=\$(grep "^CHI2R "   ${ephemeris}.dmfit | awk '{print \$2}')
         TRES=\$(grep  "^TRES "    ${ephemeris}.dmfit | awk '{print \$2}')
-        rm_results=\$(grep "Best RM is" rmfit_output.txt | cut -d ':' -f 2)
-        RM=\$(echo     \$rm_results | cut -d '/' -f 1 | cut -d ' ' -f 1)
-        if grep -q "+/-" "rmfit_output.txt"; then
-            RM_ERR=\$(echo \$rm_results | cut -d '/' -f 2 | cut -d ' ' -f 2)
-        else
-            echo "rmfit do not return an uncertainty so recording it as None"
+        if grep -q "WARNING: zero width; returning best RM" "rmfit_output.txt"; then
+            echo "Zero width error in RM fit, recording RM as best RM and RM_ERR as None."
+            RM=\$(grep "WARNING: zero width; returning best RM" rmfit_output.txt | cut -d '=' -f 2 | cut -d ' ' -f 2)
             RM_ERR=None
+        else
+            rm_results=\$(grep "Best RM is" rmfit_output.txt | cut -d ':' -f 2)
+            RM=\$(echo     \$rm_results | cut -d '/' -f 1 | cut -d ' ' -f 1)
+            if grep -q "+/-" "rmfit_output.txt"; then
+                RM_ERR=\$(echo \$rm_results | cut -d '/' -f 2 | cut -d ' ' -f 2)
+            else
+                echo "rmfit do not return an uncertainty so recording it as None"
+                RM_ERR=None
+            fi
         fi
 
         cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
@@ -141,9 +147,9 @@ process DM_RM_CALC {
         pdmp -g ${cleaned_archive}.ps/cps -mc 16 *dmcalc
 
         # Grab the outputs and write it to a file
-        DM=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 5)
-        ERR=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 6)
-        EPOCH=\$(cat pdmp.per | tr -s ' ' | cut -d ' ' -f 2)
+        DM=\$(cat pdmp.per | head -n 1 | tr -s ' ' | cut -d ' ' -f 5)
+        ERR=\$(cat pdmp.per | head -n 1 | tr -s ' ' | cut -d ' ' -f 6)
+        EPOCH=\$(cat pdmp.per | head -n 1 | tr -s ' ' | cut -d ' ' -f 2)
 
         cat << EOF > ${meta.pulsar}_${meta.utc}_dm_rm_fit.json
         {
