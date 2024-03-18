@@ -99,7 +99,7 @@ workflow MEERPIPE {
         // Covert csv into a tupe of the meta map and the files
         files_and_meta = OBS_LIST.out.splitCsv()
         .map {
-            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template, n_obs, snr, flux, raw_archive, cleaned_archive ->
+            pulsar, utc, project_short, beam, band, dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs, snr, flux, raw_archive, cleaned_archive ->
             [
                 [
                     id: "${pulsar}_${utc}_${beam}",
@@ -109,6 +109,8 @@ workflow MEERPIPE {
                     project_short: project_short,
                     band: band,
                     dur: dur,
+                    obs_nchan: obs_nchan,
+                    obs_nbin: obs_nbin,
                     cal_loc: cal_loc,
                     pipe_id: pipe_id,
                     nchans: params.nchans.split(',').collect { it.toInteger() },
@@ -127,7 +129,7 @@ workflow MEERPIPE {
         // Covert csv into a tupe of the meta map and the files
         obs_data = OBS_LIST.out.splitCsv()
         .map {
-            pulsar, utc, project_short, beam, band, dur, cal_loc, pipe_id, ephemeris, template, n_obs ->
+            pulsar, utc, project_short, beam, band, dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs ->
             [
                 [
                     id: "${pulsar}_${utc}_${beam}",
@@ -137,6 +139,8 @@ workflow MEERPIPE {
                     project_short: project_short,
                     band: band,
                     dur: dur,
+                    obs_nchan: obs_nchan,
+                    obs_nbin: obs_nbin,
                     cal_loc: cal_loc,
                     pipe_id: pipe_id,
                     nchans: params.nchans.split(',').collect { it.toInteger() },
@@ -163,6 +167,8 @@ workflow MEERPIPE {
                         beam: meta.beam,
                         band: meta.band,
                         dur: meta.dur,
+                        obs_nchan: meta.obs_nchan,
+                        obs_nbin: meta.obs_nbin,
                         cal_loc: meta.cal_loc,
                         pipe_id: meta.pipe_id,
                         nchans: meta.nchans,
@@ -237,6 +243,8 @@ workflow MEERPIPE {
                         beam: meta.beam,
                         band: meta.band,
                         dur: meta.dur,
+                        obs_nchan: meta.obs_nchan,
+                        obs_nbin: meta.obs_nbin,
                         cal_loc: meta.cal_loc,
                         pipe_id: meta.pipe_id,
                         nchans: meta.nchans,

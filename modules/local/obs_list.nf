@@ -111,10 +111,10 @@ process OBS_LIST {
             utce="${utce}",
             obs_type="fold",
         )
-        obs_df = pd.DataFrame(columns=["Obs ID","Pulsar Jname","UTC Start","Project Short Name","Beam #","Observing Band","Duration (s)","Calibration Location"])
+        obs_df = pd.DataFrame(columns=["Obs ID","Pulsar Jname","UTC Start","Project Short Name","Beam #","Observing Band","Duration (s)","Nchan","Nbin","Calibration Location"])
         for obs in obs_data:
-            if obs['pulsar']['name'] in ["J1735-3028A"]:
-                continue
+            # if obs['pulsar']['name'] in ["J1735-3028A"]:
+            #     continue
             obs_df = pd.concat(
                 [
                     obs_df,
@@ -129,6 +129,8 @@ process OBS_LIST {
                         "Beam #": obs['beam'],
                         "Observing Band": obs['band'],
                         "Duration (s)": obs['duration'],
+                        "Nchan": obs["foldNchan"],
+                        "Nbin": obs["foldNbin"],
                         "Calibration Location": obs['calibration']['location'],
                     }).to_frame().T,
                 ],
