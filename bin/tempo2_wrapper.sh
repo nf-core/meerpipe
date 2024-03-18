@@ -33,6 +33,9 @@ echo "----------------------------------"
 # freq: frequency (MHz)
 # post_phase: postfit in phase
 # flags: flags from the toa files
+
+# Remove lines with 0 snr
+sed -i '/ -snr 0.0 /d' ${archive%%.tim}.tim
 tempo2 -nofit -output general2 -s "{bat} {post} {err} {freq} {post_phase} {flags}\n" -outfile ${archive}.residual -set START 40000 -set FINISH 99999  -nobs 1000000 -npsr 1 ${select_command} -f ${ephemeris} ${archive%%.tim}.tim  && returncode=$? || returncode=$?
 if [[ ${returncode} -ne 134 && ${returncode} -ne 137 && ${returncode} -ne 0 ]]; then
     echo "Errorcode: ${returncode}. Tempo error other than lack of high S/N data error."
