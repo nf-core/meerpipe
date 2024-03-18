@@ -3,8 +3,7 @@ nextflow_pipeline {
     name "Test Workflow main.nf"
     script "main.nf"
 
-    test("Should run without failures") {
-
+    test("Run on a variety of pulsars and confirm no changes in results") {
         when {
             params {
                 outdir  = "$outputDir"
@@ -12,11 +11,38 @@ nextflow_pipeline {
                 upload  = false
             }
         }
-
         then {
-            assert workflow.success
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                        path("${params.outdir}/J1534-5334/2023-05-05-01:07:10/1/results.json"),
+                        path("${params.outdir}/J1418-3921/2020-08-08-11:55:30/4/results.json"),
+                        path("${params.outdir}/J1013-5934/2020-01-04-20:29:13/1/results.json"),
+                        path("${params.outdir}/J1410-7404/2020-09-05-10:00:47/2/results.json"),
+                        path("${params.outdir}/J0437-4715/2019-03-26-16:26:02/1/results.json"),
+                        path("${params.outdir}/J1919+0021/2020-11-30-14:55:13/4/results.json"),
+                        path("${params.outdir}/J0514-4408/2020-02-21-17:50:16/1/results.json"),
+                        path("${params.outdir}/J0900-3144/2021-04-20-14:47:54/3/results.json"),
+                        path("${params.outdir}/J1811-2405/2019-09-24-13:51:57/1/results.json"),
+                        path("${params.outdir}/J0955-6150/2019-10-07-02:26:56/1/results.json"),
+                    ).match() },
+            )
         }
-
     }
 
+    test("Run on a variety of archive sizes to ensure correct mem calc") {
+        when {
+            params {
+                outdir  = "$outputDir"
+                obs_csv = "$baseDir/tests/test_data/obs_variety_of_archive_sizes.csv"
+                upload  = false
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.failed().size() == 0 },
+            )
+        }
+    }
 }
