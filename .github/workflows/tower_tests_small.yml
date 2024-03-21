@@ -64,5 +64,5 @@ jobs:
 
           # Use variables with ${{ needs.id.outputs.variable }} syntax
           tw -o json runs view \
-              -w ${{ needs.run-tower.outputs.workspace_id }} \
-              -i ${{ needs.run-tower.outputs.workflow_id }}
+              -w ${{ needs.run-small-tests-on-ozstar.outputs.workspace_id }} \
+              -i ${{ needs.run-small-tests-on-ozstar.outputs.workflow_id }}
