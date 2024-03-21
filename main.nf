@@ -13,6 +13,16 @@ nextflow.enable.dsl = 2
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { MEERPIPE  } from './workflows/meerpipe'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_meerpipe_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_meerpipe_pipeline'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     VALIDATE & PRINT PARAMETER SUMMARY
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -22,21 +32,11 @@ nextflow.enable.dsl = 2
 //
 workflow NFCORE_MEERPIPE {
 
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
     main:
-
     //
     // WORKFLOW: Run pipeline
     //
-    MEERPIPE (
-        samplesheet
-    )
-
-    emit:
-    multiqc_report = MEERPIPE.out.multiqc_report // channel: /path/to/multiqc_report.html
-
+    MEERPIPE ()
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,22 +51,20 @@ workflow {
     //
     // SUBWORKFLOW: Run initialisation tasks
     //
-    PIPELINE_INITIALISATION (
-        params.version,
-        params.help,
-        params.validate_params,
-        params.monochrome_logs,
-        args,
-        params.outdir,
-        params.input
-    )
+    // PIPELINE_INITIALISATION (
+    //     params.version,
+    //     params.help,
+    //     params.validate_params,
+    //     params.monochrome_logs,
+    //     args,
+    //     params.outdir,
+    //     params.input
+    // )
 
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_MEERPIPE (
-        PIPELINE_INITIALISATION.out.samplesheet
-    )
+    NFCORE_MEERPIPE ()
 
     //
     // SUBWORKFLOW: Run completion tasks
@@ -78,7 +76,6 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        NFCORE_MEERPIPE.out.multiqc_report
     )
 }
 

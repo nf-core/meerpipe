@@ -4,30 +4,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-validation'
-
-def logo = NfcoreTemplate.logo(workflow, params.monochrome_logs)
-def citation = '\n' + WorkflowMain.citation(workflow) + '\n'
-def summary_params = paramsSummaryMap(workflow)
-
-// Print parameter summary log to screen
-log.info logo + paramsSummaryLog(workflow) + citation
-
-WorkflowMeerpipe.initialise(params, log)
-
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
-// Check input path parameters to see if they exist
-def checkPathParamList = [ ]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
-// Check mandatory parameters
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,10 +11,16 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//
-// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-//
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { OBS_LIST               } from '../modules/local/obs_list'
+include { PSRADD_CALIBRATE_CLEAN } from '../modules/local/psradd_calibrate_clean'
+include { DM_RM_CALC             } from '../modules/local/dm_rm_calc'
+include { GENERATE_IMAGE_RESULTS } from '../modules/local/generate_image_results'
+include { UPLOAD_RESULTS         } from '../modules/local/upload_results'
+include { GRAB_ALL_PAIRS         } from '../modules/local/grab_all_pairs'
+include { DECIMATE               } from '../modules/local/decimate'
+include { GENERATE_TOAS          } from '../modules/local/generate_toas'
+include { UPLOAD_TOAS            } from '../modules/local/upload_toas'
+include { GENERATE_RESIDUALS     } from '../modules/local/generate_residuals'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,21 +38,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-
-// Info required for completion email and summary
-def multiqc_report = []
-
-include { OBS_LIST               } from '../modules/local/obs_list'
-include { PSRADD_CALIBRATE_CLEAN } from '../modules/local/psradd_calibrate_clean'
-include { DM_RM_CALC             } from '../modules/local/dm_rm_calc'
-include { GENERATE_IMAGE_RESULTS } from '../modules/local/generate_image_results'
-include { UPLOAD_RESULTS         } from '../modules/local/upload_results'
-include { GRAB_ALL_PAIRS         } from '../modules/local/grab_all_pairs'
-include { DECIMATE               } from '../modules/local/decimate'
-include { GENERATE_TOAS          } from '../modules/local/generate_toas'
-include { UPLOAD_TOAS            } from '../modules/local/upload_toas'
-include { GENERATE_RESIDUALS     } from '../modules/local/generate_residuals'
 
 
 workflow MEERPIPE {
@@ -275,11 +242,6 @@ workflow MEERPIPE {
                 }
         )
     }
-}
-
-    emit:
-    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }
 
 /*
