@@ -56,7 +56,7 @@
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open",
-                    "default": "/fred/oz005/users/nswainst/meerpipe_testing_outputs"
+                    "default": "/fred/oz005/timing_processed"
                 },
                 "ephemeris": {
                     "type": "string",
@@ -103,7 +103,8 @@
                 "use_max_nsub": {
                     "type": "boolean",
                     "fa_icon": "fas fa-ellipsis-h",
-                    "description": "Instead of creating a single time scrunched ToA, created as many as possible based on the S/N ration and observation length."
+                    "description": "Instead of creating a single time scrunched ToA, created as many as possible based on the S/N ration and observation length.",
+                    "default": true
                 },
                 "use_prev_ar": {
                     "type": "boolean",
@@ -118,7 +119,7 @@
                 },
                 "nchans": {
                     "type": "string",
-                    "default": 1,
+                    "default": "1,16,32,58,116,928",
                     "description": "Comma separated list of nchans to frequency scrunch the data into",
                     "fa_icon": "fas fa-align-justify"
                 },
@@ -127,6 +128,12 @@
                     "default": "1,4",
                     "description": "Comma separated list of number of polarisations to scrunch the data into..",
                     "fa_icon": "fas fa-barcode"
+                },
+                "max_nchan_upload": {
+                    "type": "integer",
+                    "default": 32,
+                    "fa_icon": "fas fa-angle-double-up",
+                    "description": "Maximum number of channels of residuals to upload. Large number of channels slows down the upload and are often not required."
                 }
             }
         },
@@ -317,7 +324,7 @@
                 },
                 "tracedir": {
                     "type": "string",
-                    "default": "/fred/oz005/users/nswainst/meerpipe_testing_outputs/pipeline_info",
+                    "default": "/fred/oz005/timing_processed/pipeline_info",
                     "hidden": true
                 },
                 "validationFailUnrecognisedParams": {
