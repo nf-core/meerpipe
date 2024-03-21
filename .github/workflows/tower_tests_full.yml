@@ -1,0 +1,30 @@
+name: Full size tests on OzStar supercomputer
+run-name: Submitting workflow OzStar supercomputer using full sized data
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  run-small-tests-on-aws:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: seqeralabs/action-tower-launch@v2
+        with:
+          workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
+          access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+          compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
+          workdir: "/fred/oz005/users/nswainst/work"
+          run_name: "Tower_test_full_${{ github.sha }}"
+          revision: ${{ github.sha }}
+          profiles: test_full
+          parameters: |
+            {
+                "upload": "false"
+            }
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Tower debug log file
+          path: tower_action_*.log
