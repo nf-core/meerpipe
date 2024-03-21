@@ -15,6 +15,7 @@ jobs:
       workspace_id: ${{ steps.run.outputs.workspaceId }}
     steps:
       - uses: seqeralabs/action-tower-launch@v2
+        id: run
         with:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
@@ -37,12 +38,12 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           message: |
-            Pipeline launched, monitor progress [here](${{ steps.runs.outputs.workflowUrl }})
+            Pipeline launched, monitor progress [here](${{ steps.run.outputs.workflowUrl }})
             Details:
-              - Workflow ID: ${{ steps.runs.outputs.workflowId }}
-              - Workspace: ${{ steps.runs.outputs.WorkspaceRef }}
-              - Workspace ID: ${{ steps.runs.outputs.workspaceId }}
-              - Workflow URL: ${{ steps.runs.outputs.workflowUrl }}
+              - Workflow ID: ${{ steps.run.outputs.workflowId }}
+              - Workspace: ${{ steps.run.outputs.WorkspaceRef }}
+              - Workspace ID: ${{ steps.run.outputs.workspaceId }}
+              - Workflow URL: ${{ steps.run.outputs.workflowUrl }}
           comment_tag: towerrun
 
       - uses: actions/upload-artifact@v3
