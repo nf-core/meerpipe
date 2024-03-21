@@ -20,6 +20,10 @@ jobs:
           run_name: "Tower_test_full_${{ github.sha }}"
           revision: ${{ github.sha }}
           profiles: test_full
+          pre_run_script: |
+            module use /apps/users/pulsar/openstack/gcc-11.3.0/modulefiles
+            module load java/11
+            export PATH="$PATH:/home/nswainst"
           parameters: |
             {
                 "upload": "false"
