@@ -75,7 +75,7 @@ include { GENERATE_RESIDUALS     } from '../modules/local/generate_residuals'
 
 workflow MEERPIPE {
     if ( params.obs_csv == "" ) {
-        obs_csv = ""
+        obs_csv = Channel.fromPath("none_given")
     } else {
         obs_csv = Channel.fromPath(params.obs_csv)
     }

@@ -23,7 +23,7 @@ process OBS_LIST {
     val utcs
     val utce
     val project_short
-    val obs_csv
+    path obs_csv
     val upload
     val psrdb_url
     val psrdb_token
@@ -96,7 +96,7 @@ process OBS_LIST {
     pfr_client.get_dicts = True
     pfr_client.set_use_pagination(True)
 
-    if "${obs_csv}" in ("", "null"):
+    if "${obs_csv.baseName}" == "none_given":
         if "${pulsars}" in ("", "null"):
             pulsar_list = ""
         else:
