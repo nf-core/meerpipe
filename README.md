@@ -28,33 +28,33 @@ The pipeline is described by the following flow diagram and bullet points:
 
 1. [OBS_LIST](modules/local/obs_list.nf): Queries the MeerTime database for observations that match the input filters (described in the usage section), download their metadata and find the corresponding ephemerides and template files from the [private repository](https://ozgrav.github.io/meerkat_pulsar_docs/ephem_template/).
 2. [PSRADD_CALIBRATE_CLEAN](modules/local/psradd_calibrate_clean.nf): Prepares a cleaned and calibrated archive in the following steps:
-    1. Combine the raw archives, except for the first and last ~8 second subint, and clean them of RFI with [MeerGuard](https://github.com/danielreardon/MeerGuard)
-    2. Combine the cleaned chunks into a single file and calibrate the polarisation with [pac](https://psrchive.sourceforge.net/manuals/pac/) using the Jones matrices provided by the South African Radio Astronomy Observatory (SARAO) ([Serylak et al. 2020](https://ui.adsabs.harvard.edu/abs/2021MNRAS.505.4483S/abstract))
-    3. Apply the rotation measure from the [ATNF](https://www.atnf.csiro.au/research/pulsar/psrcat/) and apply it with [pam](https://psrchive.sourceforge.net/manuals/pam/)
-    4. Correct for delays using [dlyfix](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/dlyfix.py)
-    5. Calibrate for the flux (adjust the archive values so they are in flux units) using [fluxcal_meerkat](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/fluxcal_meerkat.py). Meerpipe uses a bootstrap method to flux calibrate the data. Using the sky map in [Calabretta et al. (2014)](https://ui.adsabs.harvard.edu/abs/2014PASA...31....7C/abstract), an initial estimate of the Tsky is computed. However owing to the large disparity in the sky map as comparted to the more resolved MeerKAT beam, a secondary estimate of Tsky is performed directly from the data. This was done by observing a high-latitude pulsar and comparing its RMS with other pulsars observed in that session. This allowed an estimate of a scaling factor used to flux calibrate the data. A detailed description of this method can be found in the TPA census paper.
-    6. Calculate the signal-to-noise ratio (S/N) using [psrstat](https://psrchive.sourceforge.net/manuals/psrstat/)
-    7. Calculate the flux density using [pdv](https://psrchive.sourceforge.net/manuals/pdv/)
+   1. Combine the raw archives, except for the first and last ~8 second subint, and clean them of RFI with [MeerGuard](https://github.com/danielreardon/MeerGuard)
+   2. Combine the cleaned chunks into a single file and calibrate the polarisation with [pac](https://psrchive.sourceforge.net/manuals/pac/) using the Jones matrices provided by the South African Radio Astronomy Observatory (SARAO) ([Serylak et al. 2020](https://ui.adsabs.harvard.edu/abs/2021MNRAS.505.4483S/abstract))
+   3. Apply the rotation measure from the [ATNF](https://www.atnf.csiro.au/research/pulsar/psrcat/) and apply it with [pam](https://psrchive.sourceforge.net/manuals/pam/)
+   4. Correct for delays using [dlyfix](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/dlyfix.py)
+   5. Calibrate for the flux (adjust the archive values so they are in flux units) using [fluxcal_meerkat](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/fluxcal_meerkat.py). Meerpipe uses a bootstrap method to flux calibrate the data. Using the sky map in [Calabretta et al. (2014)](https://ui.adsabs.harvard.edu/abs/2014PASA...31....7C/abstract), an initial estimate of the Tsky is computed. However owing to the large disparity in the sky map as comparted to the more resolved MeerKAT beam, a secondary estimate of Tsky is performed directly from the data. This was done by observing a high-latitude pulsar and comparing its RMS with other pulsars observed in that session. This allowed an estimate of a scaling factor used to flux calibrate the data. A detailed description of this method can be found in the TPA census paper.
+   6. Calculate the signal-to-noise ratio (S/N) using [psrstat](https://psrchive.sourceforge.net/manuals/psrstat/)
+   7. Calculate the flux density using [pdv](https://psrchive.sourceforge.net/manuals/pdv/)
 3. [DM_RM_CALC](modules/local/dm_rm_calc.nf): Calculate the dispersion measure (DM) and rotation measure (RM).
-    - For observations with a S/N over 20:
-        1. ToAs are created ([pat](https://psrchive.sourceforge.net/manuals/pat/)) from a time scrunched and 16 frequency channel archive ([pam](https://psrchive.sourceforge.net/manuals/pam/))
-        2. The ToAs are used to calculate the DM with [tempo2](https://bitbucket.org/psrsoft/tempo2/src/master/)
-        3. The RM is calculated with [rmfit](https://psrchive.sourceforge.net/manuals/rmfit/) (this has known issues with inaccurate fitting)
-    - For observations with a S/N under 20:
-        1. The DM is calculated with [pdmp](https://psrchive.sourceforge.net/manuals/pdmp/)
-        2. The RM is not calculated.
-    - No template available for the observations or other methods have failed:
-        1. The DM and RM are not calculated.
+   - For observations with a S/N over 20:
+     1. ToAs are created ([pat](https://psrchive.sourceforge.net/manuals/pat/)) from a time scrunched and 16 frequency channel archive ([pam](https://psrchive.sourceforge.net/manuals/pam/))
+     2. The ToAs are used to calculate the DM with [tempo2](https://bitbucket.org/psrsoft/tempo2/src/master/)
+     3. The RM is calculated with [rmfit](https://psrchive.sourceforge.net/manuals/rmfit/) (this has known issues with inaccurate fitting)
+   - For observations with a S/N under 20:
+     1. The DM is calculated with [pdmp](https://psrchive.sourceforge.net/manuals/pdmp/)
+     2. The RM is not calculated.
+   - No template available for the observations or other methods have failed:
+     1. The DM and RM are not calculated.
 4. [GENERATE_IMAGE_RESULTS](modules/local/generate_image_results.nf): Generate the images (described in the output section) and combine results into a `results.json` file:
-    1. Generate the images using [psrplot](https://psrchive.sourceforge.net/manuals/psrplot/)
-    2. Generate additional images that require Python using [generate_image_results](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/generate_images_results.py) which includes dynamic spectrum images created using [scintools](https://github.com/danielreardon/scintools)
-    3. Combine the results into a `results.json` file
+   1. Generate the images using [psrplot](https://psrchive.sourceforge.net/manuals/psrplot/)
+   2. Generate additional images that require Python using [generate_image_results](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/generate_images_results.py) which includes dynamic spectrum images created using [scintools](https://github.com/danielreardon/scintools)
+   3. Combine the results into a `results.json` file
 5. [UPLOAD_IMAGE_RESULTS](modules/local/upload_image_results.nf): Upload the images and `results.json` to the [Meertime data portal](https://pulsars.org.au)
 6. [GRAB_ALL_PAIRS](modules/local/grab_all_pairs.nf): Grab all pairs of ephemerides and template files from the [private repository](https://ozgrav.github.io/meerkat_pulsar_docs/ephem_template/) for each pulsar and project. These will be used to create different ToAs for each project.
 7. [DECIMATE](modules/local/decimate.nf): Remove the edge frequency channels with [chop_edge_channels](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/chop_edge_channels.py) then decimate the archives with [pam](https://psrchive.sourceforge.net/manuals/pam/) for each of the combinations of the following params:
-    - `nchan`: Number of frequency channels, default [1, 16, 29, 58, 116, 928]
-    - `npol`: Polarisation scrunched (1) and full stokes (4), default [1, 4]
-    - nsub (controlled with `use_max_nsub`): Number of time subintegrations. A time scrunched (1) and the largest value of nsub possible while maintaining sensitive ToAs (calculated with [calc_max_nsub](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/calc_max_nsub.py)), default  [1, max]
+   - `nchan`: Number of frequency channels, default [1, 16, 29, 58, 116, 928]
+   - `npol`: Polarisation scrunched (1) and full stokes (4), default [1, 4]
+   - nsub (controlled with `use_max_nsub`): Number of time subintegrations. A time scrunched (1) and the largest value of nsub possible while maintaining sensitive ToAs (calculated with [calc_max_nsub](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/calc_max_nsub.py)), default [1, max]
 8. [GENERATE_TOAS](modules/local/generate_toas.nf): Generate ToAs for each combination projects and decimated archives using [pat](https://psrchive.sourceforge.net/manuals/pat/)
 9. [UPLOAD_TOAS](modules/local/upload_toas.nf): Upload the ToAs to the [Meertime data portal](https://pulsars.org.au)
 10. [GENERATE_RESIDUALS](modules/local/generate_residuals.nf): Once all the UPLOAD_TOA jobs are complete, one of these process will be launched for each pulsar and project. It will download all the ToAs (including those from previous pipeline runs) and generate residuals for each combination of projects and decimated archives using [tempo2](https://bitbucket.org/psrsoft/tempo2/src/master/). These residuals will be uploaded to the [Meertime data portal](https://pulsars.org.au) to allow researchers to interactively check the quality of the observations.
