@@ -26,7 +26,7 @@ jobs:
             export PATH="$PATH:/home/nswainst"
           parameters: |
             {
-                "upload": "false"
+                "upload": false
             }
       - uses: actions/upload-artifact@v3
         with:
