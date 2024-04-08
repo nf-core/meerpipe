@@ -1,6 +1,6 @@
 Obs ID,Pulsar Jname,UTC Start,Project Short Name,Beam #,Observing Band,Duration (s),Nchan,Nbin,Calibration Location
 35409,J1534-5334,2023-05-05-01:07:10,TPA,1,LBAND,116.53766938317756,1024,1024,None
 9017,J1418-3921,2020-08-08-11:55:30,TPA,4,LBAND,233.7823401869157,1024,1024,None
-2954,J1013-5934,2020-01-04-20:29:13,TPA,1,LBAND,457.50813667289714,928,1024,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-01-04-18:56:54.jones
+2954,J1013-5934,2020-01-04-20:29:13,TPA,1,LBAND,457.50813667289714,928,1024,https://raw.githubusercontent.com/OZGrav/nf-core-meerpipe/dev/tests/test_data/2020-01-04-18:56:54.jones
 10173,J1410-7404,2020-09-05-10:00:47,TPA,2,LBAND,89.60730437383191,1024,1024,None
-173,J0437-4715,2019-03-26-16:26:02,PTA,1,LBAND,15.999999999999988,1024,1024,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones
+173,J0437-4715,2019-03-26-16:26:02,PTA,1,LBAND,15.999999999999988,1024,1024,https://raw.githubusercontent.com/OZGrav/nf-core-meerpipe/dev/tests/test_data/2019-03-26-16:10:39.jones
