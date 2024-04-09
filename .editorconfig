@@ -35,3 +35,8 @@ indent_style = unset
 # ignore python
 [*.{py,md}]
 indent_style = unset
+
+# ignore test data jones matricies
+[/tests/test_data/*jones]
+end_of_line = unset
+insert_final_newline = unset
