@@ -51,8 +51,8 @@ process UPLOAD_TOAS {
 
     # Upload template (if not uploaded already)
     template = os.path.realpath("${template}")
-    template_band = template.split("/")[-3]
-    template_project = template.split("/")[-2]
+    template_band = template.split("/")[-2]
+    template_project = template.split("/")[-3]
     template_response = template_client.create(
         "${meta.pulsar}",
         template_band,

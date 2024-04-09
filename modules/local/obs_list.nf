@@ -254,7 +254,7 @@ process OBS_LIST {
         obs_df.at[index, 'ephemeris'] = ephemeris
         obs_df.at[index, 'template']  = template
 
-        if obs["Calibration Location"] in ("", "null", "None"):
+        if obs["Calibration Location"] in ("", "null", "None", None):
             obs_df.at[index, 'Calibration Location'] = os.path.join(os.getcwd(), "no_cal_file")
             with open("no_cal_file", 'w'):
                 pass # Make an empty file
