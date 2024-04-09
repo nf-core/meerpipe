@@ -6,7 +6,6 @@ This document describes the output produced by the pipeline.
 
 The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
 
-
 ## Pipeline overview
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
@@ -17,7 +16,6 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Timing](#timing) - Create ToA files for timing analysis
   - [Scintillation](#scintillation) - Create files for scintillation analysis
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
-
 
 ## Meerpipe products
 
@@ -36,11 +34,10 @@ or add a template to the [ephemeris and template repo](/meerkat_pulsar_docs/ephe
 
 This directory also contains the following subdirectories that will be explained in the following subsections:
 
- - [`images`](#images)
- - [`decimated`](#decimated)
- - [`timing`](#timing)
- - [`scintillation`](#scintillation)
-
+- [`images`](#images)
+- [`decimated`](#decimated)
+- [`timing`](#timing)
+- [`scintillation`](#scintillation)
 
 ### Images
 
@@ -48,14 +45,13 @@ The images directory (`${params.outdir}/<pulsar>/<utc>/<beam>/images/`) contains
 Each image will either start with `cleaned` or `raw` depending on whether the image was created from a cleaned/zapped or raw archive respectively.
 The images names and descriptions are listed below in the same order they appear on the data portal:
 
- - `{cleaned/raw}_profile_ftp.png`: The polarisation pulse profile.
- - `{cleaned/raw}_profile_fts.png`: The pulse profile.
- - `{cleaned/raw}_phase_time.png`: The phase vs. time plot.
- - `{cleaned/raw}_phase_freq.png`: The phase vs. frequency plot.
- - `{cleaned/raw}_bandpass.png`: The bandpass plot which shows the frequency response and which channels were flagged.
- - `{cleaned/raw}_SNR_cumulative.png`: The cumulative signal-to-noise ratio plot which shows how the SNR increases with time.
- - `{cleaned/raw}_SNR_single.png`: The single subint signal-to-noise ratio plot which shows the SNR at each subint.
-
+- `{cleaned/raw}_profile_ftp.png`: The polarisation pulse profile.
+- `{cleaned/raw}_profile_fts.png`: The pulse profile.
+- `{cleaned/raw}_phase_time.png`: The phase vs. time plot.
+- `{cleaned/raw}_phase_freq.png`: The phase vs. frequency plot.
+- `{cleaned/raw}_bandpass.png`: The bandpass plot which shows the frequency response and which channels were flagged.
+- `{cleaned/raw}_SNR_cumulative.png`: The cumulative signal-to-noise ratio plot which shows how the SNR increases with time.
+- `{cleaned/raw}_SNR_single.png`: The single subint signal-to-noise ratio plot which shows the SNR at each subint.
 
 ### Decimated
 
@@ -72,7 +68,6 @@ where `<_chopped>` is included in the file name if the edge frequency channels a
 `<nsub>` is the number of time subintegrations.
 
 For example `J0855-3331_2020-07-11-11:08:23_zap_chopped.16ch1p1t.ar` is a decimated archive with the edge channels removed, 16 frequency channels, 1 polarisation and 1 subintegration.
-
 
 ### Timing
 
@@ -91,7 +86,6 @@ where, as above, `<_chopped>` is included in the file name if the edge frequency
 
 The ToAs can manually be combined into a single `.tim` file or more easily downloaded using `psrdb toa download`, see the [psrd docs](https://psrdb.readthedocs.io/en/latest/how_to_use.html#toa-download-example) for examples of how to do so.
 
-
 ### Scintillation
 
 The scintillation directory (`${params.outdir}/<pulsar>/<utc>/<beam>/scintillation/`) contains files used for scintillation analysis.
@@ -108,7 +102,6 @@ There are also png files which are created with the [scintools](https://github.c
 ```
 <pulsar>_<utc>_{raw,zap}.ar.dynspec.png
 ```
-
 
 ## Pipeline information
 

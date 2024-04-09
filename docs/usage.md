@@ -25,13 +25,12 @@ This structure is based on what is currently available on the Swinburne's OzSTAR
 
 where:
 
- - `<pulsar>`: A pulsar J name (e.g. J0437-4715)
- - `<utc>`: The start time of the observation in UTC and the format "YYYY-MM-DD-HH:MM:SS.SS" (e.g. 2023-12-11-03:23:30)
- - `<beam>`: The beam ID (the PTUSE server, e.g. 4)
- - `<freq>`: The centre frequency in MHz (e.g. 1284)
+- `<pulsar>`: A pulsar J name (e.g. J0437-4715)
+- `<utc>`: The start time of the observation in UTC and the format "YYYY-MM-DD-HH:MM:SS.SS" (e.g. 2023-12-11-03:23:30)
+- `<beam>`: The beam ID (the PTUSE server, e.g. 4)
+- `<freq>`: The centre frequency in MHz (e.g. 1284)
 
- These observations you wish to process can be defined using either the arguments on the command line ([Filtering observations](/usage#filtering-observations)) or with a observation file for more advanced combinations of observations ([Observation file](usage#observation-file)).
-
+These observations you wish to process can be defined using either the arguments on the command line ([Filtering observations](/usage#filtering-observations)) or with a observation file for more advanced combinations of observations ([Observation file](usage#observation-file)).
 
 ### Filtering observations
 
@@ -52,16 +51,16 @@ or to process a single observation, you can use the same date value for `--utcs`
 
 The observation file is a CSV file with the following columns:
 
-| Column    | Description |
-| --------- | ----------- |
-| Obs ID | The observation's database ID |
-| Pulsar Jname | The pulsar's Jname |
-| UTC Start | The start time of the observation at UTC in the format "YYYY-MM-DD-HH:MM:SS.SS"  |
-| Project Short Name | The abbreviated name of the observing project (e.g. PTA, TPA, Relbin or GC) |
-| Beam # | An integer from 1 to 4 of the PTUSE machine ID that preprocessed the observations|
-| Observing Band | The frequency band of the observation (e.g UHF, LBAND or SBAND_<0-4>) |
-| Duration (s) | Duration of the observation in seconds |
-| Calibration Location | The path to the calibration file if it exists |
+| Column               | Description                                                                       |
+| -------------------- | --------------------------------------------------------------------------------- |
+| Obs ID               | The observation's database ID                                                     |
+| Pulsar Jname         | The pulsar's Jname                                                                |
+| UTC Start            | The start time of the observation at UTC in the format "YYYY-MM-DD-HH:MM:SS.SS"   |
+| Project Short Name   | The abbreviated name of the observing project (e.g. PTA, TPA, Relbin or GC)       |
+| Beam #               | An integer from 1 to 4 of the PTUSE machine ID that preprocessed the observations |
+| Observing Band       | The frequency band of the observation (e.g UHF, LBAND or SBAND\_<0-4>)            |
+| Duration (s)         | Duration of the observation in seconds                                            |
+| Calibration Location | The path to the calibration file if it exists                                     |
 
 For example, one of the observation files used for testing looks like this:
 
@@ -85,7 +84,6 @@ For example you can use psrdb to download all observations where the processing 
 ```console
 psrdb observation download --incomplete --main_project MeerTIME --obs_type fold
 ```
-
 
 ## Running the pipeline
 

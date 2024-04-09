@@ -1,29 +1,17 @@
-// TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
-//               https://github.com/nf-core/modules/tree/master/modules/nf-core/
-//               You can also ask for help via your pull request or on the #modules channel on the nf-core Slack workspace:
-//               https://nf-co.re/join
-// TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
-//               All other parameters MUST be provided using the "task.ext" directive, see here:
-//               https://www.nextflow.io/docs/latest/process.html#ext
-//               where "task.ext" is a string.
-//               Any parameters that need to be evaluated in the context of a particular sample
-//               e.g. single-end/paired-end data MUST also be defined and evaluated appropriately.
-// TODO nf-core: Software that can be piped together SHOULD be added to separate module files
-//               unless there is a run-time, storage advantage in implementing in this way
-//               e.g. it's ok to have a single module for bwa to output BAM instead of SAM:
-//                 bwa mem | samtools view -B -T ref.fasta
-// TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
-//               list (`[]`) instead of a file can be used to work around this issue.
-
 process OBS_LIST {
+    label 'process_single'
     label 'psrdb'
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/meerpipe:latest':
+        'nickswainston/meerpipe:latest' }"
 
     input:
     val pulsars
     val utcs
     val utce
     val project_short
-    val obs_csv
+    path obs_csv
     val upload
     val psrdb_url
     val psrdb_token
@@ -46,6 +34,7 @@ process OBS_LIST {
     import json
     import time
     import base64
+    import shutil
     import logging
     import pandas as pd
     from datetime import datetime
@@ -96,7 +85,7 @@ process OBS_LIST {
     pfr_client.get_dicts = True
     pfr_client.set_use_pagination(True)
 
-    if "${obs_csv}" in ("", "null"):
+    if "${obs_csv.baseName}" == "none_given":
         if "${pulsars}" in ("", "null"):
             pulsar_list = ""
         else:
@@ -158,11 +147,18 @@ process OBS_LIST {
         # Grab ephermis and templates
         if "${ephemeris}" in ("", "null"):
             ephemeris = grab_ephemeris(pulsar, project, fold=True)
+            os.makedirs(project, exist_ok=True)
+            shutil.copyfile(ephemeris, f"{project}/{pulsar}.par")
+            ephemeris = os.path.join(os.getcwd(), f"{project}/{pulsar}.par")
         else:
             ephemeris = "${ephemeris}"
         if "${template}" in ("", "null"):
             try:
                 template = grab_template(pulsar, project, band, fold=True)
+                os.makedirs(f"{band}", exist_ok=True)
+                os.makedirs(f"{band}/{project}", exist_ok=True)
+                shutil.copyfile(template, f"{band}/{project}/{pulsar}.std")
+                template = os.path.join(os.getcwd(), f"{band}/{project}/{pulsar}.std")
             except NoFilesFound:
                 template = os.path.join(os.getcwd(), "no_template.std")
                 with open(template, 'w'):
@@ -257,6 +253,11 @@ process OBS_LIST {
         obs_df.at[index, 'pipe_id']   = pipe_id
         obs_df.at[index, 'ephemeris'] = ephemeris
         obs_df.at[index, 'template']  = template
+
+        if obs["Calibration Location"] in ("", "null", "None"):
+            obs_df.at[index, 'Calibration Location'] = os.path.join(os.getcwd(), "no_cal_file")
+            with open("no_cal_file", 'w'):
+                pass # Make an empty file
 
         # Count observations with the same pulsar
         obs_df.at[index, 'n_obs']     = len(obs_df[obs_df['Pulsar Jname'] == pulsar])

@@ -15,6 +15,7 @@ jobs:
       workspace_id: ${{ steps.run.outputs.workspaceId }}
     steps:
       - uses: seqeralabs/action-tower-launch@v2
+        id: run
         with:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
@@ -34,14 +35,15 @@ jobs:
 
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v2
+        if: github.event_name == 'pull_request'
         with:
           message: |
-            Pipeline launched, monitor progress [here](${{ steps.runs.outputs.workflowUrl }})
+            Pipeline launched, monitor progress [here](${{ steps.run.outputs.workflowUrl }})
             Details:
-              - Workflow ID: ${{ steps.runs.outputs.workflowId }}
-              - Workspace: ${{ steps.runs.outputs.WorkspaceRef }}
-              - Workspace ID: ${{ steps.runs.outputs.workspaceId }}
-              - Workflow URL: ${{ steps.runs.outputs.workflowUrl }}
+              - Workflow ID: ${{ steps.run.outputs.workflowId }}
+              - Workspace: ${{ steps.run.outputs.WorkspaceRef }}
+              - Workspace ID: ${{ steps.run.outputs.workspaceId }}
+              - Workflow URL: ${{ steps.run.outputs.workflowUrl }}
           comment_tag: towerrun
 
       - uses: actions/upload-artifact@v3
@@ -50,18 +52,18 @@ jobs:
           name: Tower debug log file
           path: tower_action_*.log
 
-  get_details:
-    runs-on: ubuntu-latest
-    needs: [run-small-tests-on-ozstar]
-    steps:
-      - name: Get run details
-        run: |
-          # Install TW CLI
-          wget -L https://github.com/seqeralabs/tower-cli/releases/download/v0.7.3/tw-0.7.3-linux-x86_64
-          sudo mv tw-* /usr/local/bin/tw
-          chmod +x /usr/local/bin/tw
+  # get_details:
+  #   runs-on: ubuntu-latest
+  #   needs: [run-small-tests-on-ozstar]
+  #   steps:
+  #     - name: Get run details
+  #       run: |
+  #         # Install TW CLI
+  #         wget -L https://github.com/seqeralabs/tower-cli/releases/download/v0.7.3/tw-0.7.3-linux-x86_64
+  #         sudo mv tw-* /usr/local/bin/tw
+  #         chmod +x /usr/local/bin/tw
 
-          # Use variables with ${{ needs.id.outputs.variable }} syntax
-          tw -o json runs view \
-              -w ${{ needs.run-tower.outputs.workspace_id }} \
-              -i ${{ needs.run-tower.outputs.workflow_id }}
+  #         # Use variables with ${{ needs.id.outputs.variable }} syntax
+  #         tw -o json runs view \
+  #             -w ${{ needs.run-small-tests-on-ozstar.outputs.workspace_id }} \
+  #             -i ${{ needs.run-small-tests-on-ozstar.outputs.workflow_id }}
