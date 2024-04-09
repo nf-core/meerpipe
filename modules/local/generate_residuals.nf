@@ -54,7 +54,7 @@ process GENERATE_RESIDUALS {
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
-    # Loop over each of the TOA filters
+    # Loop over each of the TOA filters set in params
     for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
         for nchan in ${meta.nchans.join(' ')}; do
             if ((nchan > ${params.max_nchan_upload})); then
@@ -65,10 +65,10 @@ process GENERATE_RESIDUALS {
                 echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan} \${npol}\\n--------------------------\\n"
                 psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} \$min_or_max_sub --nchan \$nchan --npol \$npol
                 echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan} \${npol}\\n--------------------------\\n"
-                tempo2_wrapper.sh toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim ${ephemeris}
+                tempo2_wrapper.sh toa_${meta.pulsar}_${meta.project_short}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim ${ephemeris}
                 if [ -f "toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim.residual" ]; then
                     echo -e "\\nUpload the residuals\\n--------------------------\\n"
-                    psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim.residual
+                    psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_${meta.project_short}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim.residual
                 fi
             done
         done
