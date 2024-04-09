@@ -2,6 +2,10 @@ process OBS_LIST {
     label 'process_single'
     label 'psrdb'
 
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/meerpipe:latest':
+        'nickswainston/meerpipe:latest' }"
+
     input:
     val pulsars
     val utcs
@@ -30,6 +34,7 @@ process OBS_LIST {
     import json
     import time
     import base64
+    import shutil
     import logging
     import pandas as pd
     from datetime import datetime
@@ -142,11 +147,18 @@ process OBS_LIST {
         # Grab ephermis and templates
         if "${ephemeris}" in ("", "null"):
             ephemeris = grab_ephemeris(pulsar, project, fold=True)
+            os.makedirs(project, exist_ok=True)
+            shutil.copyfile(ephemeris, f"{project}/{pulsar}.par")
+            ephemeris = os.path.join(os.getcwd(), f"{project}/{pulsar}.par")
         else:
             ephemeris = "${ephemeris}"
         if "${template}" in ("", "null"):
             try:
                 template = grab_template(pulsar, project, band, fold=True)
+                os.makedirs(f"{band}", exist_ok=True)
+                os.makedirs(f"{band}/{project}", exist_ok=True)
+                shutil.copyfile(template, f"{band}/{project}/{pulsar}.std")
+                template = os.path.join(os.getcwd(), f"{band}/{project}/{pulsar}.std")
             except NoFilesFound:
                 template = os.path.join(os.getcwd(), "no_template.std")
                 with open(template, 'w'):
@@ -241,6 +253,11 @@ process OBS_LIST {
         obs_df.at[index, 'pipe_id']   = pipe_id
         obs_df.at[index, 'ephemeris'] = ephemeris
         obs_df.at[index, 'template']  = template
+
+        if obs["Calibration Location"] in ("", "null", "None"):
+            obs_df.at[index, 'Calibration Location'] = os.path.join(os.getcwd(), "no_cal_file")
+            with open("no_cal_file", 'w'):
+                pass # Make an empty file
 
         # Count observations with the same pulsar
         obs_df.at[index, 'n_obs']     = len(obs_df[obs_df['Pulsar Jname'] == pulsar])

@@ -9,14 +9,13 @@ process PSRADD_CALIBRATE_CLEAN {
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
-    // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     // conda "YOUR-TOOL-HERE"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //     'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
-    //     'biocontainers/YOUR-TOOL-HERE' }"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/meerpipe:latest':
+        'nickswainston/meerpipe:latest' }"
 
     input:
-    tuple val(meta), path(ephemeris), path(template)
+    tuple val(meta), path(cal_loc), path(ephemeris), path(template)
 
     output:
     tuple val(meta), path(ephemeris), path(template), path("${meta.pulsar}_${meta.utc}_raw.ar"), path("${meta.pulsar}_${meta.utc}_zap.ar"), env(SNR), env(FLUX)
@@ -74,12 +73,13 @@ process PSRADD_CALIBRATE_CLEAN {
 
 
     echo "Calibrate the polarisation of the archive"
-    if [[ "${meta.cal_loc}" == "" || "${meta.cal_loc}" == "None" ]]; then
+    if [[ "${cal_loc}" == "" || "${cal_loc}" == "no_cal_file" ]]; then
         # The archives have already be calibrated so just update the headers
         pac_args="-XP -e scalP"
     else
         # Use the Stokes paramaters files to calibrate the archive
-        pac_args="-Q ${meta.cal_loc} -e scal"
+        cal_loc="${cal_loc}"
+        pac_args="-Q \${cal_loc//\\\\/} -e scal"
     fi
     pac \${pac_args} -O ./ ${meta.pulsar}_${meta.utc}_raw.ar
     if [ "\$raw_only" == "false" ]; then
@@ -92,7 +92,7 @@ process PSRADD_CALIBRATE_CLEAN {
         rm=\$(grep ${meta.pulsar} \${rm_cat} | tr -s ' ' | cut -d ' ' -f 2)
         echo "Found RM of \${rm} in the private RM catalogue"
     else
-        rm=\$(psrcat -c RM ${meta.pulsar} -X -all | tr -s ' ' | cut -d ' ' -f 1)
+        rm=\$(psrcat -c RM ${meta.pulsar} -X | tr -s ' ' | cut -d ' ' -f 1)
         if [[ "\${rm}" == "*" || "\${rm}" == "WARNING:" ]]; then
             echo "No RM found in the ATNF catalogue"
             rm=0
