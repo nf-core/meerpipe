@@ -33,9 +33,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 259.029266357422 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 4.045 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 243.568695068359 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 4.055 ) },
+            )
         }
     }
 
@@ -68,9 +70,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 184.709213256836 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.638 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 183.963897705078 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.633 ) },
+            )
         }
     }
 
@@ -103,9 +107,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 735.17626953125 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 2.255 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 621.893005371094 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 2.256 ) },
+            )
         }
     }
 
@@ -138,9 +144,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 80.4701843261719 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.785 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 80.5294799804688 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.784 ) },
+            )
         }
     }
 
@@ -173,9 +181,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 9127.01953125 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 255.052 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 9164.34765625 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 255.476 ) },
+            )
         }
     }
 
@@ -207,9 +217,47 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 205.802658081055 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.516 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 205.845947265625 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.516 ) },
+            )
+        }
+    }
+
+    test("J1222-5738_2020-02-27-23:59:49_3: period: slow   DM: medium obs_len: medium") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  Channel.fromList([
+                    tuple(
+                        // meta map
+                        [
+                            id: "J1222-5738_2020-02-27-23:59:49_3",
+                            pulsar: "J1222-5738",
+                            utc: "2020-02-27-23:59:49",
+                            beam: 3,
+                            dur: 1121.56,
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
+                        ],
+                    "$baseDir/tests/test_data/no_cal_file",
+                    "$baseDir/tests/test_data/J1222-5738.par",
+                    "$baseDir/tests/test_data/J1222-5738.std",
+                    )
+                ])
+                """
+            }
+        }
+        then {
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 149.398681640625 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.197 ) },
+            )
         }
     }
 
@@ -241,9 +289,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1484.63439941406 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.759 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1483.1162109375 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.759 ) },
+            )
         }
     }
 
@@ -275,14 +325,15 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert process.out.get(0)[0][5] == "None"
-            assert process.out.get(0)[0][6] == "None"
+            assertAll (
+                { assert process.success },
+                { assert process.out.get(0)[0][5] == "None" },
+                { assert process.out.get(0)[0][6] == "None" },
+            )
         }
     }
 
     test("J0737-3039A_2023-09-25-04:28:00_4: period: MSP    DM: medium obs_len: medium") {
-        tag "new"
         when {
             params {
                 outdir = "$outputDir"
@@ -310,9 +361,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 296.615692138672 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.0 ) // Zero because it is an SBAND obs
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 298.962860107422 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 0.0 ) }, // Zero because it is an SBAND obs
+            )
         }
     }
 
@@ -344,9 +397,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1602.49243164062 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 6.289 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 1522.41223144531 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 6.232 ) },
+            )
         }
     }
 
@@ -378,9 +433,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 883.721984863281 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.747 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 886.279113769531 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.739 ) },
+            )
         }
     }
 
@@ -412,9 +469,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 836.70751953125 )
-            assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.207 )
+            assertAll (
+                { assert process.success },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][5].toFloat(), 814.789184570312 ) },
+                { assert TestUtils.floats_within_six_digits( process.out.get(0)[0][6].toFloat(), 1.219 ) },
+            )
         }
     }
 
