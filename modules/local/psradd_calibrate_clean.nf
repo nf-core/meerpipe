@@ -86,6 +86,12 @@ process PSRADD_CALIBRATE_CLEAN {
         pac \${pac_args} -O ./ ${meta.pulsar}_${meta.utc}_zap.ar
     fi
 
+    echo "Update the DM header value from ephemeris"
+    pam --update_dm -E ${ephemeris} -m ${meta.pulsar}_${meta.utc}_raw.scalP
+    if [ "\$raw_only" == "false" ]; then
+        pam --update_dm -E ${ephemeris} -m ${meta.pulsar}_${meta.utc}_zap.scalP
+    fi
+
     echo "Update the RM value if available"
     rm_cat=\$(python -c "from meerpipe.data_load import RM_CAT;print(RM_CAT)")
     if grep -q "${meta.pulsar}" \${rm_cat}; then
