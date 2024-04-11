@@ -5,6 +5,7 @@ nextflow_process {
     process "DM_RM_CALC"
 
     test("J1534-5334_2023-05-05-01:07:10_1: period: slow   DM: low    obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -23,6 +24,8 @@ nextflow_process {
                             cal_loc: "",
                             band: "LBAND",
                             snr: 259.778747558594,
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
                     "$baseDir/tests/test_data/J1534-5334.par",
                     "$baseDir/tests/test_data/J1534-5334.std",
@@ -46,6 +49,7 @@ nextflow_process {
     }
 
     test("J1410-7404_2020-09-05-10:00:47_2: period: medium DM: medium obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -64,6 +68,8 @@ nextflow_process {
                             cal_loc: "",
                             band: "LBAND",
                             snr: 80.4668273925781,
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
                     "$baseDir/tests/test_data/J1410-7404.par",
                     "$baseDir/tests/test_data/J1410-7404.std",
@@ -87,6 +93,7 @@ nextflow_process {
     }
 
     test("J0437-4715_2019-03-26-16:26:02_1: period: MSP    DM: low    obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -105,6 +112,8 @@ nextflow_process {
                             cal_loc: "/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones",
                             band: "LBAND",
                             snr: 9052.873046875,
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
                     "$baseDir/tests/test_data/J0437-4715.par",
                     "$baseDir/tests/test_data/J0437-4715.std",
@@ -146,6 +155,8 @@ nextflow_process {
                             cal_loc: "",
                             band: "LBAND",
                             snr: "None",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
                     "$baseDir/tests/test_data/J0514-4408.par",
                     "$baseDir/tests/test_data/no_template.std",
@@ -187,6 +198,8 @@ nextflow_process {
                             cal_loc: "",
                             band: "LBAND",
                             snr: 17.3289585113525,
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
                     "$baseDir/tests/test_data/J1904+0451.par",
                     "$baseDir/tests/test_data/J1904+0451.std",
@@ -228,6 +241,8 @@ nextflow_process {
                             cal_loc: "",
                             band: "LBAND",
                             snr: 20.5,
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
                     "$baseDir/tests/test_data/J1658-5324.par",
                     "$baseDir/tests/test_data/J1658-5324.std",

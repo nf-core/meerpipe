@@ -5,6 +5,7 @@ nextflow_process {
     process "OBS_LIST"
 
     test("Should run without failures") {
+        tag "short"
         when {
             params {
                 pulsar = "J1744-1134,J1909-3744"
@@ -39,7 +40,7 @@ nextflow_process {
     }
 
     test("TPA obs should use fold ephem") {
-        tag "new"
+        tag "short"
         when {
             params {
                 pulsar = "J0711+0931"

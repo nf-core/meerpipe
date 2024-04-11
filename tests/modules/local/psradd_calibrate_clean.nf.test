@@ -5,6 +5,7 @@ nextflow_process {
     process "PSRADD_CALIBRATE_CLEAN"
 
     test("J1534-5334_2023-05-05-01:07:10_1: period: slow   DM: low    obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -20,8 +21,10 @@ nextflow_process {
                             utc: "2023-05-05-01:07:10",
                             beam: 1,
                             dur: 116.53766938317756,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J1534-5334.par",
                     "$baseDir/tests/test_data/J1534-5334.std",
                     )
@@ -37,6 +40,7 @@ nextflow_process {
     }
 
     test("J1418-3921_2020-08-08-11:55:30_4: period: slow   DM: medium obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -52,8 +56,10 @@ nextflow_process {
                             utc: "2020-08-08-11:55:30",
                             beam: 4,
                             dur: 233.7823401869157,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J1418-3921.par",
                     "$baseDir/tests/test_data/J1418-3921.std",
                     )
@@ -69,6 +75,7 @@ nextflow_process {
     }
 
     test("J1013-5934_2020-01-04-20:29:13_1: period: slow   DM: high   obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -84,8 +91,10 @@ nextflow_process {
                             utc: "2020-01-04-20:29:13",
                             beam: 1,
                             dur: 457.50813667289714,
-                            cal_loc: "",
+                            obs_nchan: 928,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J1013-5934.par",
                     "$baseDir/tests/test_data/J1013-5934.std",
                     )
@@ -101,6 +110,7 @@ nextflow_process {
     }
 
     test("J1410-7404_2020-09-05-10:00:47_2: period: medium DM: medium obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -116,8 +126,10 @@ nextflow_process {
                             utc: "2020-09-05-10:00:47",
                             beam: 2,
                             dur: 89.60730437383191,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J1410-7404.par",
                     "$baseDir/tests/test_data/J1410-7404.std",
                     )
@@ -133,6 +145,7 @@ nextflow_process {
     }
 
     test("J0437-4715_2019-03-26-16:26:02_1: period: MSP    DM: low    obs_len: short ") {
+        tag "short"
         when {
             params {
                 outdir = "$outputDir"
@@ -148,8 +161,10 @@ nextflow_process {
                             utc: "2019-03-26-16:26:02",
                             beam: 1,
                             dur: 15.999999999999988,
-                            cal_loc: "/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/2019-03-26-16:10:39.jones",
                     "$baseDir/tests/test_data/J0437-4715.par",
                     "$baseDir/tests/test_data/J0437-4715.std",
                     )
@@ -165,7 +180,6 @@ nextflow_process {
     }
 
     test("J0711+0931_2020-07-04-09:47:10_3: period: slow   DM: medium obs_len: medium") {
-        tag "new"
         when {
             params {
                 outdir = "$outputDir"
@@ -181,8 +195,10 @@ nextflow_process {
                             utc: "2020-07-04-09:47:10",
                             beam: 3,
                             dur: 637.8824840373778,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J0711+0931_fold.par",
                     "$baseDir/tests/test_data/J0711+0931.std",
                     )
@@ -213,8 +229,10 @@ nextflow_process {
                             utc: "2020-11-30-14:55:13",
                             beam: 4,
                             dur: 1318.9994574953269,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J1919+0021.par",
                     "$baseDir/tests/test_data/J1919+0021.std",
                     )
@@ -245,8 +263,10 @@ nextflow_process {
                             utc: "2020-02-21-17:50:16",
                             beam: 1,
                             dur: 1800.00,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J0514-4408.par",
                     "$baseDir/tests/test_data/no_template.std",
                     )
@@ -262,6 +282,7 @@ nextflow_process {
     }
 
     test("J0737-3039A_2023-09-25-04:28:00_4: period: MSP    DM: medium obs_len: medium") {
+        tag "new"
         when {
             params {
                 outdir = "$outputDir"
@@ -277,8 +298,10 @@ nextflow_process {
                             utc: "2023-09-25-04:28:00",
                             beam: 4,
                             dur: 1801.45,
-                            cal_loc: "",
+                            obs_nchan: 16384,
+                            obs_nbin: 128,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J0737-3039A.par",
                     "$baseDir/tests/test_data/J0737-3039A.std",
                     )
@@ -309,8 +332,10 @@ nextflow_process {
                             utc: "2021-04-20-14:47:54",
                             beam: 3,
                             dur: 2047.541722352941,
-                            cal_loc: "",
+                            obs_nchan: 1024,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J0900-3144.par",
                     "$baseDir/tests/test_data/J0900-3144.std",
                     )
@@ -341,8 +366,10 @@ nextflow_process {
                             utc: "2019-09-24-13:51:57",
                             beam: 1,
                             dur: 7205.58,
-                            cal_loc: "",
+                            obs_nchan: 928,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J1811-2405.par",
                     "$baseDir/tests/test_data/J1811-2405.std",
                     )
@@ -373,8 +400,10 @@ nextflow_process {
                             utc: "2019-10-07-02:26:56",
                             beam: 1,
                             dur: 14402.60,
-                            cal_loc: "",
+                            obs_nchan: 928,
+                            obs_nbin: 1024,
                         ],
+                    "$baseDir/tests/test_data/no_cal_file",
                     "$baseDir/tests/test_data/J0955-6150.par",
                     "$baseDir/tests/test_data/J0955-6150.std",
                     )
