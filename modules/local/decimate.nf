@@ -38,17 +38,35 @@ process DECIMATE {
     else
         clean_ar=${cleaned_archive}
     fi
+    nsubs_list="1"
+    if ${params.use_all_nsub}; then
+        # Use all nsubs, do not time scrunch
+        nsub=\$( vap -c nsub  \$clean_ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        nsubs_list="\${nsubs_list} all_\${nsub}"
+    fi
+    if ${params.use_mode_nsub}; then
+        # Use the most common observation length as the sub integration length
+        mode="${ Math.floor( meta.dur.toFloat() / meta.mode_dur.toFloat() ).toInteger() }"
+        if [ \${mode} -eq "0" ]; then
+            mode=1
+        fi
+        nsubs_list="\${nsubs_list} mode_\${mode}"
+    fi
+
     for nchan in ${meta.nchans.join(' ')}; do
         if ${params.use_max_nsub}; then
             nsub=\$( vap -c nsub  \$clean_ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
             # Calculate nsub to get desired TOA S/N
-            nsubs=\$(calc_max_nsub --sn ${meta.snr} --nchan \${nchan} --duration ${meta.dur} --input_nsub \${nsub} --sn_desired ${params.tos_sn})
-        else
-            nsubs="1"
+            nsubs="\$nsubs_list \$(calc_max_nsub --sn ${meta.snr} --nchan \${nchan} --duration ${meta.dur} --input_nsub \${nsub} --sn_desired ${params.tos_sn})"
         fi
 
         # Make a max_nsub decimation and a time scrunched decimation
         for nsub in \$nsubs; do
+            if [[ \${nsub} == "all"* && \${nchan} -ne 1 ]]; then
+                echo "Skipping decimation if nchan != 1 for all nsub. nsub=\${nsub##*_} nchan=\${nchan}"
+                continue
+            fi
+
             # Make full stokes and/or polarisation scrunched
             for stokes in ${meta.npols.join(' ')}; do
                 if [ \${stokes} -eq 1 ]; then
@@ -58,8 +76,8 @@ process DECIMATE {
                     stokes_op=""
                 fi
 
-                echo "Decimate nsub=\${nsub}  nchan=\${nchan} stokes=\${stokes}"
-                pam --setnsub \${nsub} --setnchn \${nchan} -S \${stokes_op} -e \${nchan}ch\${stokes}p\${nsub}t.ar \${clean_ar}
+                echo "Decimate nsub=\${nsub##*_} nchan=\${nchan} stokes=\${stokes}"
+                pam --setnsub \${nsub##*_} --setnchn \${nchan} -S \${stokes_op} -e \${nchan}ch_\${stokes}p_\${nsub}t.ar \${clean_ar}
             done
         done
     done

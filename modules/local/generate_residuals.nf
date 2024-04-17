@@ -26,20 +26,29 @@ process GENERATE_RESIDUALS {
     //               Each software used MUST provide the software name and version number in the YAML version file (versions.yml)
     """
     # Loop over each of the TOA filters set in params
-    for min_or_max_sub in "--minimum_nsubs" "--maximum_nsubs"; do
+    nsub_types="1"
+    if ${params.use_max_nsub}; then
+        nsub_types="\${nsub_types} max"
+    fi
+    if ${params.use_mode_nsub}; then
+        nsub_types="\${nsub_types} mode"
+    fi
+    for nsub_type in \${nsub_types}; do
         for nchan in ${meta.nchans.join(' ')}; do
             if ((nchan > ${params.max_nchan_upload})); then
-                echo -e "\\nSkipping the calculation and upload for residuals for \${min_or_max_sub#--} \${nchan}\\n--------------------------\\n"
+                echo -e "\\nSkipping the calculation and upload for residuals for \${nsub_type} \${nchan}\\n--------------------------\\n"
                 continue
             fi
             for npol in ${meta.npols.join(' ')}; do
-                echo -e "\\nDownload the toa file and fit the residuals for \${min_or_max_sub#--} \${nchan} \${npol}\\n--------------------------\\n"
-                psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} \$min_or_max_sub --nchan \$nchan --npol \$npol
-                echo -e "\\nGenerating residuals for \${min_or_max_sub#--} \${nchan} \${npol}\\n--------------------------\\n"
-                tempo2_wrapper.sh toa_${meta.pulsar}_${meta.project_short}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim ${ephemeris}
-                if [ -f "toa_${meta.pulsar}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim.residual" ]; then
+                echo -e "\\nDownload the toa file and fit the residuals for nsub=\${nsub_type} nchan=\${nchan} npol=\${npol}\\n--------------------------\\n"
+                psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} --nsub_type \$nsub_type --nchan \$nchan --npol \$npol
+                echo -e "\\nGenerating residuals for nsub=\${nsub_type} nchan=\${nchan} npol=\${npol}\\n--------------------------\\n"
+                tempo2_wrapper.sh toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim ${ephemeris}
+                if [ -f "toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim.residual" ]; then
                     echo -e "\\nUpload the residuals\\n--------------------------\\n"
-                    psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_${meta.project_short}_\${min_or_max_sub#--}_nchan\${nchan}_npol\${npol}.tim.residual
+                    psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim.residual
+                else
+                    echo -e "\\nResiduals file toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim.residual not found\\n--------------------------\\n"
                 fi
             done
         done

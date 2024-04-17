@@ -63,52 +63,84 @@ process UPLOAD_TOAS {
     template_id = get_rest_api_id(template_response, logging.getLogger(__name__))
 
     # Upload TOAs
-    for toa_file in ["${toas.join('","')}"]:
-        if "dm_corrected" in toa_file:
-            dmcorrected = True
-            # TODO don't skip this if it's useful
-            continue
-        else:
-            dmcorrected = False
+    for nchan in [${meta.nchans.join(', ')}]:
+        for npol in [${meta.npols.join(', ')}]:
+            # Grab all the nsub types
+            nsub_types = []
+            if "${params.use_all_nsub}" == "true":
+                nsub_types.append("all")
+            if "${params.use_mode_nsub}" == "true":
+                nsub_types.append("mode")
+            if "${params.use_max_nsub}" == "true":
+                nsub_types.append("max")
 
-        # Work out if this is the minimum or maximum number of subints
-        if "${params.chop_edge}" == "true":
-            file_name_end = "_zap_chopped."
-        else:
-            file_name_end = "_zap."
-        nchan = toa_file.split(file_name_end)[-1].split("ch")[0]
-        npol = toa_file.split(f"{file_name_end}{nchan}ch")[-1].split("p")[0]
-        nsub = toa_file.split(f"{file_name_end}{nchan}ch{npol}p")[-1].split("t.ar")[0]
-        toas_same_nchan = glob(f"*{file_name_end}{nchan}ch{npol}p*{toa_file.split('.ar.')[1]}")
-        nsubs_list = []
-        for toa in toas_same_nchan:
-            nsubs_list.append(int(toa.split(f"{file_name_end}{nchan}ch{npol}p")[-1].split("t.ar")[0]))
-        minimum_nsubs = False
-        maximum_nsubs = False
-        if max(nsubs_list) == int(nsub):
-            maximum_nsubs = True
-        if min(nsubs_list) == int(nsub):
-            minimum_nsubs = True
+            # Work out which types only have 1 nsub
+            nsub_1_types = []
+            nsub_other_types = []
+            for nsub_type in nsub_types:
+                print(f"${meta.pulsar}_*{nchan}ch_{npol}p_{nsub_type}*t.ar.tim")
+                toa_files = glob(f"${meta.pulsar}_*{nchan}ch_{npol}p_{nsub_type}*t.ar.tim")
+                if len(toa_files) == 1:
+                    toa_file = toa_files[0]
+                    nsub = int(toa_file.split(f"{npol}p_{nsub_type}_")[-1].split("t.ar.tim")[0])
+                    if nsub == 1:
+                        nsub_1_types.append(nsub_type)
+                    else:
+                        nsub_other_types.append((nsub_type, toa_file))
 
-        logger.info(f"Uploading Toa file {toa_file} with maximum_nsubs={maximum_nsubs}, minimum_nsubs={minimum_nsubs}, nchan={nchan}, npol={npol}, nsub={nsub}")
-        with open(toa_file, "r") as f:
-            toa_lines = f.readlines()
-            toa_response = toa_client.create(
-                ${meta.pipe_id},
-                "${meta.project_short}",
-                "${ephemeris}",
-                template_id,
-                toa_lines,
-                dmcorrected,
-                minimum_nsubs,
-                maximum_nsubs,
-                npol,
-                nchan,
-            )
-            if toa_response.status_code not in (200, 201):
-                logger.error("Failed to upload TOA")
-                exit(1)
-            logger.info(get_graphql_id(toa_response, "toa", logger))
+            # Upload the nsub=1 type using just the nsub=1 file
+            toa_file = glob(f"${meta.pulsar}_*{nchan}ch_{npol}p_1t.ar.tim")[0]
+            all_nsubs = True if "all" in nsub_1_types else False
+            max_nsubs = True if "max" in nsub_1_types else False
+            mode_nsubs = True if "mode" in nsub_1_types else False
+            logger.info(f"Uploading Toa nsub=1 file {toa_file} with nchan={nchan}, npol={npol}, all_nsubs={all_nsubs}, max_nsubs={max_nsubs}, mode_nsubs={mode_nsubs},")
+            with open(toa_file, "r") as f:
+                toa_lines = f.readlines()
+                toa_response = toa_client.create(
+                    ${meta.pipe_id},
+                    "${meta.project_short}",
+                    "${ephemeris}",
+                    template_id,
+                    toa_lines,
+                    dmCorrected=False,
+                    minimumNsubs=True,
+                    maximumNsubs=max_nsubs,
+                    allNsubs=all_nsubs,
+                    modeNsubs=mode_nsubs,
+                    npol=npol,
+                    nchan=nchan,
+                )
+                if toa_response.status_code not in (200, 201):
+                    logger.error("Failed to upload TOA")
+                    exit(1)
+                logger.info(get_graphql_id(toa_response, "toa", logger))
+
+            # Upload all the non nsub=1 types
+            for nsub_type, toa_file in nsub_other_types:
+                all_nsubs = True if "all" == nsub_type else False
+                max_nsubs = True if "max" == nsub_type else False
+                mode_nsubs = True if "mode" == nsub_type else False
+                logger.info(f"Uploading Toa file {toa_file} with nchan={nchan}, npol={npol}, all_nsubs={all_nsubs}, max_nsubs={max_nsubs}, mode_nsubs={mode_nsubs},")
+                with open(toa_file, "r") as f:
+                    toa_lines = f.readlines()
+                    toa_response = toa_client.create(
+                        ${meta.pipe_id},
+                        "${meta.project_short}",
+                        "${ephemeris}",
+                        template_id,
+                        toa_lines,
+                        dmCorrected=False,
+                        minimumNsubs=False,
+                        maximumNsubs=max_nsubs,
+                        allNsubs=all_nsubs,
+                        modeNsubs=mode_nsubs,
+                        npol=npol,
+                        nchan=nchan,
+                    )
+                    if toa_response.status_code not in (200, 201):
+                        logger.error("Failed to upload TOA")
+                        exit(1)
+                    logger.info(get_graphql_id(toa_response, "toa", logger))
     """
 
     stub:
