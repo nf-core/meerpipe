@@ -4,7 +4,7 @@ process DECIMATE {
     label 'meerpipe'
     label 'scratch'
 
-    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/decimated", mode: 'copy', pattern: "${meta.pulsar}_${meta.utc}_zap*t.ar"
+    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/decimated", mode: 'copy', pattern: "${meta.pulsar}_${meta.utc}_{raw,zap}*t.ar"
 
 
     // TODO nf-core: List required Conda package(s).
@@ -16,10 +16,10 @@ process DECIMATE {
         'nickswainston/meerpipe:latest' }"
 
     input:
-    tuple val(meta), path(cleaned_archive)
+    tuple val(meta), path(template), path(archive)
 
     output:
-    tuple val(meta), path("${meta.pulsar}_${meta.utc}_zap*t.ar")
+    tuple val(meta), path(template), path("${meta.pulsar}_${meta.utc}_{raw,zap}*t.ar")
 
     when:
     task.ext.when == null || task.ext.when
@@ -33,15 +33,15 @@ process DECIMATE {
     //               Each software used MUST provide the software name and version number in the YAML version file (versions.yml)
     """
     if [ "${params.chop_edge}" == "true" ]; then
-        chop_edge_channels --band ${meta.band} ${cleaned_archive}
-        clean_ar=${cleaned_archive.getName().replace("_zap", "_zap_chopped")}
+        chop_edge_channels --band ${meta.band} ${archive}
+        archive=${archive.getName().replace("_zap", "_zap_chopped").replace("_raw", "_raw_chopped")}
     else
-        clean_ar=${cleaned_archive}
+        archive=${archive}
     fi
     nsubs_list="1"
     if ${params.use_all_nsub}; then
         # Use all nsubs, do not time scrunch
-        nsub=\$( vap -c nsub  \$clean_ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        nsub=\$( vap -c nsub  \$archive | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
         nsubs_list="\${nsubs_list} all_\${nsub}"
     fi
     if ${params.use_mode_nsub}; then
@@ -54,10 +54,12 @@ process DECIMATE {
     fi
 
     for nchan in ${meta.nchans.join(' ')}; do
-        if ${params.use_max_nsub}; then
-            nsub=\$( vap -c nsub  \$clean_ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        if [[ ${params.use_max_nsub} && "${meta.snr}" != "None" ]]; then
+            nsub=\$( vap -c nsub  \$archive | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
             # Calculate nsub to get desired TOA S/N
             nsubs="\$nsubs_list \$(calc_max_nsub --sn ${meta.snr} --nchan \${nchan} --duration ${meta.dur} --input_nsub \${nsub} --sn_desired ${params.tos_sn})"
+        else
+            nsubs="\$nsubs_list"
         fi
 
         # Make a max_nsub decimation and a time scrunched decimation
@@ -77,7 +79,7 @@ process DECIMATE {
                 fi
 
                 echo "Decimate nsub=\${nsub##*_} nchan=\${nchan} stokes=\${stokes}"
-                pam --setnsub \${nsub##*_} --setnchn \${nchan} -S \${stokes_op} -e \${nchan}ch_\${stokes}p_\${nsub}t.ar \${clean_ar}
+                pam --setnsub \${nsub##*_} --setnchn \${nchan} -S \${stokes_op} -e \${nchan}ch_\${stokes}p_\${nsub}t.ar \${archive}
             done
         done
     done

@@ -172,15 +172,25 @@ workflow MEERPIPE {
     pulsar_project_ephem_template = GRAB_ALL_PAIRS.out.splitCsv()
 
     // Decimate into different time and freq chunks using pam
+    with_templates = files_and_meta
+        .filter { it[2].baseName != "no_template" }
+        // Only grab the cleaned archives
+        .map {
+            meta, ephemeris, template, raw_archive, cleaned_archive ->
+            [ meta, template, cleaned_archive ]
+        }
+    without_templates = files_and_meta
+        .filter { it[2].baseName == "no_template" }
+        // Since there is no template to create a cleaned_archive, grab the raw_archive
+        .map {
+            meta, ephemeris, template, raw_archive, cleaned_archive ->
+            [ meta, template, raw_archive ]
+        }
     DECIMATE(
-        files_and_meta
-            // Filter out observations without templates
-            .filter { it[2].baseName != "no_template" }
-            // Only send it the paths and vals it needs
-            .map {
-                meta, ephemeris, template, raw_archive, cleaned_archive ->
-                [ meta, cleaned_archive ]
-            }
+        with_templates
+        .concat(
+            without_templates
+        )
     )
 
     // Generate TOAs
@@ -189,8 +199,10 @@ workflow MEERPIPE {
             .combine(
                 DECIMATE
                 .out
+                // Filter out observations without templates
+                .filter { it[1].baseName != "no_template" }
                 .map {
-                    meta, decimated_archives ->
+                    meta, template, decimated_archives ->
                     [ meta.pulsar, meta, decimated_archives ]
                 },
                 by: 0
