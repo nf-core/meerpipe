@@ -45,4 +45,23 @@ nextflow_pipeline {
             )
         }
     }
+
+    test("Run an observation without a template and ensure the decimated products are still output") {
+        tag "new"
+        when {
+            params {
+                outdir  = "$outputDir"
+                obs_csv = "$baseDir/tests/test_data/obs_with_no_template.csv"
+                upload  = false
+            }
+        }
+        then {
+            def output_directory = new File("${params.outdir}/J0514-4408/2020-02-21-17:50:16/1/decimated")
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.failed().size() == 0 },
+                { assert output_directory.listFiles().findAll { file -> file.getName().startsWith("J0514-4408_2020-02-21-17:50:16_raw") }.size() > 0 },
+            )
+        }
+    }
 }

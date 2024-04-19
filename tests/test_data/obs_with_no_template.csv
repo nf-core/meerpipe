@@ -1,0 +1,2 @@
+Obs ID,Pulsar Jname,UTC Start,Project Short Name,Beam #,Observing Band,Duration (s),Mode Duration (s),Nchan,Nbin,Calibration Location
+1,J0514-4408,2020-02-21-17:50:16,TPA,1,LBAND,1799.9996901682246,1792,1024,1024,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-02-21-17:32:22.jones
