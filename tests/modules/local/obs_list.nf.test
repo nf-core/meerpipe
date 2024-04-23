@@ -22,7 +22,7 @@ nextflow_process {
                     params.utcs,
                     params.utce,
                     params.project,
-                    params.obs_csv,
+                    file("none_given"),
                     params.upload,
                     params.psrdb_url,
                     params.psrdb_token,
@@ -34,8 +34,10 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.out_csv.get(0)).readLines().size() == 4
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.out_csv.get(0)).readLines().size() == 4 },
+            )
         }
     }
 
@@ -57,7 +59,7 @@ nextflow_process {
                     params.utcs,
                     params.utce,
                     params.project,
-                    params.obs_csv,
+                    file("none_given"),
                     params.upload,
                     params.psrdb_url,
                     params.psrdb_token,
@@ -69,9 +71,11 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.out_csv.get(0)).readLines().size() == 1
-            assert path(process.out.out_csv.get(0)).readLines()[0].contains("/fold/")
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.out_csv.get(0)).readLines().size() == 1 },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].contains("/fold/") },
+            )
         }
     }
 

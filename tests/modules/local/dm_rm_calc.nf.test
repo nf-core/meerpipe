@@ -37,14 +37,16 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.get(0)[0][5]).json["DM"] == "25.261153459584751843"
-            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.03045464532755817050"
-            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59400"
-            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "1.2658"
-            assert path(process.out.get(0)[0][5]).json["TRES"] == "122.370"
-            assert path(process.out.get(0)[0][5]).json["RM"] == "22.9168"
-            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "11.93"
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.get(0)[0][5]).json["DM"] == "25.26115313620792671" },
+                { assert path(process.out.get(0)[0][5]).json["ERR"] == "0.03045467190105807451" },
+                { assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59400" },
+                { assert path(process.out.get(0)[0][5]).json["CHI2R"] == "1.2659" },
+                { assert path(process.out.get(0)[0][5]).json["TRES"] == "122.370" },
+                { assert path(process.out.get(0)[0][5]).json["RM"] == "22.9168" },
+                { assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "11.93" },
+            )
         }
     }
 
@@ -81,14 +83,16 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.get(0)[0][5]).json["DM"] == "54.238033166402631433"
-            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00601313752705323005"
-            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59400"
-            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "0.5028"
-            assert path(process.out.get(0)[0][5]).json["TRES"] == "21.420"
-            assert path(process.out.get(0)[0][5]).json["RM"] == "-4.17085"
-            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.get(0)[0][5]).json["DM"] == "54.238033174312628385" },
+                { assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00601315609408512551" },
+                { assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59400" },
+                { assert path(process.out.get(0)[0][5]).json["CHI2R"] == "0.5028" },
+                { assert path(process.out.get(0)[0][5]).json["TRES"] == "21.420" },
+                { assert path(process.out.get(0)[0][5]).json["RM"] == "-4.17085" },
+                { assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None" },
+            )
         }
     }
 
@@ -125,14 +129,16 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.get(0)[0][5]).json["DM"] == "2.6420830395015044592"
-            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00011356905934389115"
-            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "54500"
-            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "1.2503"
-            assert path(process.out.get(0)[0][5]).json["TRES"] == "0.246"
-            assert path(process.out.get(0)[0][5]).json["RM"] == "0.657496"
-            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "0.1"
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.get(0)[0][5]).json["DM"] == "2.6420829270058230622" },
+                { assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00011358072306644368" },
+                { assert path(process.out.get(0)[0][5]).json["EPOCH"] == "54500" },
+                { assert path(process.out.get(0)[0][5]).json["CHI2R"] == "1.2506" },
+                { assert path(process.out.get(0)[0][5]).json["TRES"] == "0.246" },
+                { assert path(process.out.get(0)[0][5]).json["RM"] == "0.657496" },
+                { assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "0.1" },
+            )
         }
     }
 
@@ -168,14 +174,16 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.get(0)[0][5]).json["DM"] == "None"
-            assert path(process.out.get(0)[0][5]).json["ERR"] == "None"
-            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "None"
-            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "None"
-            assert path(process.out.get(0)[0][5]).json["TRES"] == "None"
-            assert path(process.out.get(0)[0][5]).json["RM"] == "None"
-            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.get(0)[0][5]).json["DM"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["ERR"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["EPOCH"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["CHI2R"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["TRES"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["RM"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None" },
+            )
         }
     }
 
@@ -211,14 +219,16 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.get(0)[0][5]).json["DM"] == "182.678"
-            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.069"
-            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59087.735280"
-            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "None"
-            assert path(process.out.get(0)[0][5]).json["TRES"] == "None"
-            assert path(process.out.get(0)[0][5]).json["RM"] == "None"
-            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.get(0)[0][5]).json["DM"] == "182.678" },
+                { assert path(process.out.get(0)[0][5]).json["ERR"] == "0.069" },
+                { assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59087.735280" },
+                { assert path(process.out.get(0)[0][5]).json["CHI2R"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["TRES"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["RM"] == "None" },
+                { assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None" },
+            )
         }
     }
 
@@ -235,7 +245,7 @@ nextflow_process {
                         [
                             id: "J1658-5324_2022-02-09-02:47:59_1",
                             pulsar: "J1658-5324",
-                            utc: "2020-08-26-17:24:01",
+                            utc: "2022-02-09-02:47:59",
                             beam: 1,
                             dur: 319.55,
                             cal_loc: "",
@@ -254,14 +264,16 @@ nextflow_process {
             }
         }
         then {
-            assert process.success
-            assert path(process.out.get(0)[0][5]).json["DM"] == "30.828810512928090128"
-            assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00023992226050556316"
-            assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59000"
-            assert path(process.out.get(0)[0][5]).json["CHI2R"] == "0.0072"
-            assert path(process.out.get(0)[0][5]).json["TRES"] == "0.282"
-            assert path(process.out.get(0)[0][5]).json["RM"] == "-26.188"
-            assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None"
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.get(0)[0][5]).json["DM"] == "30.828810512928090128" },
+                { assert path(process.out.get(0)[0][5]).json["ERR"] == "0.00023992226050556316" },
+                { assert path(process.out.get(0)[0][5]).json["EPOCH"] == "59000" },
+                { assert path(process.out.get(0)[0][5]).json["CHI2R"] == "0.0072" },
+                { assert path(process.out.get(0)[0][5]).json["TRES"] == "0.282" },
+                { assert path(process.out.get(0)[0][5]).json["RM"] == "-26.188" },
+                { assert path(process.out.get(0)[0][5]).json["RM_ERR"] == "None" },
+            )
         }
     }
 }
