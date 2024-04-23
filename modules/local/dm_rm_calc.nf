@@ -15,7 +15,7 @@ process DM_RM_CALC {
     tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive)
 
     output:
-    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path("${meta.pulsar}_${meta.utc}_dm_rm_fit.json")
+    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path("${meta.pulsar}_${meta.utc}_dm_rm_fit.json"), path("{cleaned,no}_rmfit.png")
 
     when:
     task.ext.when == null || task.ext.when
@@ -40,6 +40,7 @@ process DM_RM_CALC {
             "RM_ERR": "None"
         }
         EOF
+        touch no_rmfit.png
         """
     else if ( Float.valueOf(meta.snr) > 20.0 )
         """
@@ -78,6 +79,12 @@ process DM_RM_CALC {
         higher_rm=\$(echo "\$input_rm + 34" | bc -l)
         echo -e "\\nFit for RM from \$lower_rm - \$higher_rm \\n----------------------------------"
         rmfit -D -m \$lower_rm,\$higher_rm,200 ${meta.pulsar}_${meta.utc}_zap.rmcalc -K /PNG > rmfit_output.txt 2>&1
+        if [ -f pgplot.png ]; then
+            mv pgplot.png cleaned_rmfit.png
+        else
+            echo "No RM fit plot produced, check rmfit_output.txt for errors."
+            touch no_rmfit.png
+        fi
 
         echo -e "\\nGrab the outputs and write it to a file\\n----------------------------------"
         DM=\$(grep    "^DM "      ${ephemeris}.dmfit | awk '{print \$2}')
@@ -133,6 +140,7 @@ process DM_RM_CALC {
             "RM_ERR": "None"
         }
         EOF
+        touch no_rmfit.png
         """
 
     stub:
@@ -150,5 +158,6 @@ process DM_RM_CALC {
         "RM_ERR": "None"
     }
     EOF
+    touch no_rmfit.png
     """
 }

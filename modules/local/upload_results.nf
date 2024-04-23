@@ -81,6 +81,8 @@ process UPLOAD_RESULTS {
         image_data.append( ("cleaned_SNR_cumulative.png", 'snr-cumul',   'high', True ) )
         if os.path.exists("${meta.pulsar}_${meta.utc}_zap.ar.dynspec.png"):
             image_data.append( ("${meta.pulsar}_${meta.utc}_zap.ar.dynspec.png", 'dynamic-spectrum', 'high', True ) )
+        if os.path.exists("cleaned_rmfit.png"):
+            image_data.append( ("cleaned_rmfit.png", 'rmfit', 'high', True ) )
 
     # Upload images
     for image_path, image_type, resolution, cleaned in image_data:

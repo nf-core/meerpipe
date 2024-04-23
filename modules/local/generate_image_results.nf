@@ -16,10 +16,10 @@ process GENERATE_IMAGE_RESULTS {
         'nickswainston/meerpipe:latest' }"
 
     input:
-    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path(dm_results)
+    tuple val(meta), path(ephemeris), path(template), path(raw_archive), path(cleaned_archive), path(dm_results), path(rm_fit_image)
 
     output:
-    tuple val(meta), path("*.png"), path("*.dat"), path("*dynspec"), path("results.json")
+    tuple val(meta), path("*.png", includeInputs: true), path("*.dat"), path("*dynspec"), path("results.json")
 
     when:
     task.ext.when == null || task.ext.when
