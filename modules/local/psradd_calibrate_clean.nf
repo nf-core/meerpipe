@@ -4,7 +4,7 @@ process PSRADD_CALIBRATE_CLEAN {
     label 'meerpipe'
     label 'scratch'
 
-    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}", mode: params.publish_dir_mode, pattern: "${ template.baseName == "no_template" ? "*raw.ar" : "*zap.ar" }"
+    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}", mode: params.publish_dir_mode, pattern: "${ template.baseName == "no_template" ? "*raw.ar" : "*zap.ar" }", overwrite: true
 
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
@@ -31,6 +31,10 @@ process PSRADD_CALIBRATE_CLEAN {
     //               e.g. https://github.com/nf-core/modules/blob/master/modules/nf-core/homer/annotatepeaks/main.nf
     """
     raw_only=${ template.baseName == "no_template" ? "true" : "false" }
+
+    # Grab obs.header to output it the publishDir
+    mkdir -p ${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}
+    cp ${params.input_dir}/${meta.pulsar}/${meta.utc}/${meta.beam}/*/obs.header ${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}
 
     if ${params.use_edge_subints}; then
         # Grab all archives
