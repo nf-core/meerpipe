@@ -52,7 +52,7 @@ process DM_RM_CALC {
             nchan=16
         fi
         pam --setnchn \${nchan} -T -S -p -e dmcalc ${cleaned_archive}
-        pam --setnchn \${nchan} -T -S    -e rmcalc ${cleaned_archive}
+        pam --setnchn 16 -T -S    -e rmcalc ${cleaned_archive}
 
         echo -e "\\nCreate TOAs with max channel archive\\n----------------------------------"
         # Grab template nchan
@@ -75,10 +75,29 @@ process DM_RM_CALC {
         tempo2 -nofit -fit DM -set START 40000 -set FINISH 99999 -f ${ephemeris}.dm -outpar ${ephemeris}.dmfit dm.tim
 
         input_rm=\$(vap -c rm ${meta.pulsar}_${meta.utc}_zap.rmcalc | tail -n 1| tr -s ' ' | cut -d ' ' -f 2)
-        lower_rm=\$(echo "\$input_rm - 34" | bc -l)
-        higher_rm=\$(echo "\$input_rm + 34" | bc -l)
-        echo -e "\\nFit for RM from \$lower_rm - \$higher_rm \\n----------------------------------"
-        rmfit -D -m \$lower_rm,\$higher_rm,200 ${meta.pulsar}_${meta.utc}_zap.rmcalc -K /PNG > rmfit_output.txt 2>&1
+        if [ "${meta.band}" == "UHF" ]; then
+            rm_range=7
+        elif [ "${meta.band}" == "LBAND" ]; then
+            rm_range=16
+        elif [ "${meta.band}" == "SBAND_0" ]; then
+            rm_range=67
+        elif [ "${meta.band}" == "SBAND_1" ]; then
+            rm_range=85
+        elif [ "${meta.band}" == "SBAND_2" ]; then
+            rm_range=105
+        elif [ "${meta.band}" == "SBAND_3" ]; then
+            rm_range=126
+        elif [ "${meta.band}" == "SBAND_4" ]; then
+            rm_range=150
+        else
+            echo "WARNING unknown band, using 16 as default RM range."
+            rm_range=16
+        fi
+        rm_steps=\$(echo "\$rm_range * 2" | bc -l)
+        lower_rm=\$(echo "\$input_rm - \$rm_range" | bc -l)
+        higher_rm=\$(echo "\$input_rm + \$rm_range" | bc -l)
+        echo -e "\\nFit for RM from \$lower_rm - \$higher_rm with \$rm_steps steps\\n----------------------------------"
+        rmfit -D -m \$lower_rm,\$higher_rm,\$rm_steps ${meta.pulsar}_${meta.utc}_zap.rmcalc -K /PNG > rmfit_output.txt 2>&1
         if [ -f pgplot.png ]; then
             mv pgplot.png cleaned_rmfit.png
         else
