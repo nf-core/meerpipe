@@ -244,7 +244,7 @@ workflow MEERPIPE {
                     meta, ephem ->
                     [ groupKey( "${meta.pulsar}_${meta.project_short}", meta.n_obs.toInteger() ), meta, ephem ]
                 }
-                .groupTuple( remainder: true )
+                .groupTuple( remainder: true, sort: {a, b -> a[1] <=> b[1]} )
                 .map {
                     id, meta, ephem -> [ meta[0], ephem[0] ]
                 }
