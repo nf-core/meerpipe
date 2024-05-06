@@ -23,9 +23,7 @@ process GENERATE_IMAGE_RESULTS {
     tuple val(meta), path("*.png", includeInputs: true), path("*.dat"), path("*dynspec"), path("results.json")
 
     when:
-    (task.ext.when == null || task.ext.when) \
-        && meta.utc != "2020-02-02-15:26:48" \
-        && meta.utc != "2020-01-10-06:58:07"
+    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
