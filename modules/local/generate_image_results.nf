@@ -2,6 +2,7 @@ process GENERATE_IMAGE_RESULTS {
     tag "$meta.id"
     label 'process_high'
     label 'meerpipe'
+    label 'scratch'
 
     publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/images", mode: 'copy', pattern: "{c,t,r}*png"
     publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}/scintillation", mode: 'copy', pattern: "*dynspec*"
@@ -22,7 +23,9 @@ process GENERATE_IMAGE_RESULTS {
     tuple val(meta), path("*.png", includeInputs: true), path("*.dat"), path("*dynspec"), path("results.json")
 
     when:
-    task.ext.when == null || task.ext.when
+    (task.ext.when == null || task.ext.when) \
+        && meta.utc != "2020-02-02-15:26:48" \
+        && meta.utc != "2020-01-10-06:58:07"
 
     script:
     def args = task.ext.args ?: ''
