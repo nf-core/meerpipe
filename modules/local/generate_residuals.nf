@@ -39,18 +39,16 @@ process GENERATE_RESIDUALS {
                 echo -e "\\nSkipping the calculation and upload for residuals for \${nsub_type} \${nchan}\\n--------------------------\\n"
                 continue
             fi
-            for npol in ${meta.npols.join(' ')}; do
-                echo -e "\\nDownload the toa file and fit the residuals for nsub=\${nsub_type} nchan=\${nchan} npol=\${npol}\\n--------------------------\\n"
-                psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} --nsub_type \$nsub_type --nchan \$nchan --npol \$npol
-                echo -e "\\nGenerating residuals for nsub=\${nsub_type} nchan=\${nchan} npol=\${npol}\\n--------------------------\\n"
-                tempo2_wrapper.sh toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim ${ephemeris}
-                if [ -f "toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim.residual" ]; then
-                    echo -e "\\nUpload the residuals\\n--------------------------\\n"
-                    psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim.residual
-                else
-                    echo -e "\\nResiduals file toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol\${npol}.tim.residual not found\\n--------------------------\\n"
-                fi
-            done
+            echo -e "\\nDownload the toa file and fit the residuals for nsub=\${nsub_type} nchan=\${nchan} npol=1\\n--------------------------\\n"
+            psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} toa download ${meta.pulsar} --project ${meta.project_short} --nsub_type \$nsub_type --nchan \$nchan --npol 1
+            echo -e "\\nGenerating residuals for nsub=\${nsub_type} nchan=\${nchan} npol=1\\n--------------------------\\n"
+            tempo2_wrapper.sh toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol1.tim ${ephemeris}
+            if [ -f "toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol1.tim.residual" ]; then
+                echo -e "\\nUpload the residuals\\n--------------------------\\n"
+                psrdb -u ${params.psrdb_url} -t ${params.psrdb_token} residual create toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol1.tim.residual
+            else
+                echo -e "\\nResiduals file toa_${meta.pulsar}_${meta.project_short}_\${nsub_type}_nsub_nchan\${nchan}_npol1.tim.residual not found\\n--------------------------\\n"
+            fi
         done
     done
     """

@@ -67,41 +67,40 @@ process UPLOAD_TOAS {
         if ${meta.obs_nchan} % nchan != 0:
             logger.warning(f"nchan={nchan} does not divide obs_nchan=${meta.obs_nchan}, skipping.")
             continue
-        for npol in [${meta.npols.join(', ')}]:
-            # Grab all the nsub types
-            nsub_types = ["1"]
-            if "${params.use_all_nsub}" == "true":
-                nsub_types.append("all")
-            if "${params.use_mode_nsub}" == "true":
-                nsub_types.append("mode")
-            if "${params.use_max_nsub}" == "true":
-                nsub_types.append("max")
+        # Grab all the nsub types
+        nsub_types = ["1"]
+        if "${params.use_all_nsub}" == "true":
+            nsub_types.append("all")
+        if "${params.use_mode_nsub}" == "true":
+            nsub_types.append("mode")
+        if "${params.use_max_nsub}" == "true":
+            nsub_types.append("max"
 
-            # Work out which types only have 1 nsub
-            for nsub_type in nsub_types:
-                if nsub_type == "all" and nchan != 1:
-                    print(f"Skipping nsub_type=all for nchan != 1 (nchan={nchan})")
-                    continue
-                print(f"${meta.pulsar}_*.{nchan}ch_{npol}p_{nsub_type}*t.ar.tim")
-                toa_file = glob(f"${meta.pulsar}_*.{nchan}ch_{npol}p_{nsub_type}*t.ar.tim")[0]
-                logger.info(f"Uploading Toa nsub=1 file {toa_file} with nchan={nchan}, npol={npol}, nsub_type={nsub_type}")
-                with open(toa_file, "r") as f:
-                    toa_lines = f.readlines()
-                    toa_response = toa_client.create(
-                        ${meta.pipe_id},
-                        "${meta.project_short}",
-                        "${ephemeris}",
-                        template_id,
-                        toa_lines,
-                        dmCorrected=False,
-                        nsub_type=nsub_type,
-                        npol=npol,
-                        nchan=nchan,
-                    )
-                    if toa_response.status_code not in (200, 201):
-                        logger.error("Failed to upload TOA")
-                        exit(1)
-                    logger.info(get_graphql_id(toa_response, "toa", logger))
+        # Work out which types only have 1 nsub
+        for nsub_type in nsub_types:
+            if nsub_type == "all" and nchan != 1:
+                print(f"Skipping nsub_type=all for nchan != 1 (nchan={nchan})")
+                continue
+            print(f"${meta.pulsar}_*.{nchan}ch_1p_{nsub_type}*t.ar.tim")
+            toa_file = glob(f"${meta.pulsar}_*.{nchan}ch_1p_{nsub_type}*t.ar.tim")[0]
+            logger.info(f"Uploading Toa nsub=1 file {toa_file} with nchan={nchan}, npol=1, nsub_type={nsub_type}")
+            with open(toa_file, "r") as f:
+                toa_lines = f.readlines()
+                toa_response = toa_client.create(
+                    ${meta.pipe_id},
+                    "${meta.project_short}",
+                    "${ephemeris}",
+                    template_id,
+                    toa_lines,
+                    dmCorrected=False,
+                    nsub_type=nsub_type,
+                    npol=1,
+                    nchan=nchan,
+                )
+                if toa_response.status_code not in (200, 201):
+                    logger.error("Failed to upload TOA")
+                    exit(1)
+                logger.info(get_graphql_id(toa_response, "toa", logger))
     """
 
     stub:

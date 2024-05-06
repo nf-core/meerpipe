@@ -4,7 +4,7 @@ process PSRADD_CALIBRATE_CLEAN {
     label 'meerpipe'
     label 'scratch'
 
-    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}", mode: params.publish_dir_mode, pattern: "${ template.baseName == "no_template" ? "*raw.ar" : "*zap.ar" }", overwrite: true
+    publishDir "${params.outdir}/${meta.pulsar}/${meta.utc}/${meta.beam}", mode: params.publish_dir_mode, pattern: "${ template.baseName == "no_template" ? "*raw.ar" : "*zap.ar" }"
 
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").

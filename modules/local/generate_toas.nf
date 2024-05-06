@@ -33,6 +33,11 @@ process GENERATE_TOAS {
     """
     # Loop over each DECIMATEd archive
     for ar in ${decimated_archives.join(' ')}; do
+        npol=\$(vap -c npol \$ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        if [ "\$npol" -gt 1 ]; then
+            echo "Skipping \${ar} as it has more than one polarization channel"
+            continue
+        fi
         # Grab archive and template nchan
         nchan=\$(vap -c nchan \$ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
         tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
