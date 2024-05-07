@@ -74,7 +74,7 @@ process UPLOAD_TOAS {
         if "${params.use_mode_nsub}" == "true":
             nsub_types.append("mode")
         if "${params.use_max_nsub}" == "true":
-            nsub_types.append("max"
+            nsub_types.append("max")
 
         # Work out which types only have 1 nsub
         for nsub_type in nsub_types:
