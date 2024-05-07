@@ -89,6 +89,11 @@
             "fa_icon": "fas fa-briefcase",
             "help_text": "",
             "properties": {
+                "use_prev_ar": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-angle-double-left",
+                    "description": "Use the previously created calibrated and cleaned archive in the output directory."
+                },
                 "use_edge_subints": {
                     "type": "boolean",
                     "description": "Use first and last 8 second subints of observation archives.",
@@ -100,21 +105,28 @@
                     "fa_icon": "fas fa-cut",
                     "description": "Remove edge frequency channels of the archive before decimating."
                 },
+                "use_mode_nsub": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-ellipsis-h",
+                    "description": "Additionally create decimations and ToAs with the mode nsub type (most common observation duration used for nsub length). Default True."
+                },
+                "use_all_nsub": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-ellipsis-h",
+                    "description": "Additionally create decimations with the all nsub type (use all available nsubs). Default True."
+                },
                 "use_max_nsub": {
                     "type": "boolean",
                     "fa_icon": "fas fa-ellipsis-h",
-                    "description": "Instead of creating a single time scrunched ToA, created as many as possible based on the S/N ration and observation length.",
+                    "description": "Additionally create decimations and ToAs with the max nsub type (maximum number of nsubs with at least the 'toa_sn' signal-to-noise ratio). Default True.",
                     "default": true
-                },
-                "use_prev_ar": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-angle-double-left",
-                    "description": "Use the previously created calibrated and cleaned archive in the output directory."
                 },
                 "tos_sn": {
                     "type": "integer",
                     "default": 12,
-                    "description": "Desired ToA S/N ratio, used to calculate the nsub to use",
+                    "description": "Desired ToA S/N ratio, used to calculate the max nsub type to use",
                     "fa_icon": "fas fa-signal"
                 },
                 "nchans": {
