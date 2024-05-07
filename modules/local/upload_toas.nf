@@ -67,8 +67,8 @@ process UPLOAD_TOAS {
         if ${meta.obs_nchan} % nchan != 0:
             logger.warning(f"nchan={nchan} does not divide obs_nchan=${meta.obs_nchan}, skipping.")
             continue
-        if ${meta.obs_nchan} < ${params.max_nchan_upload}:
-            logger.warning(f"nchan={nchan} is less than max_nchan_upload=${params.max_nchan_upload}, skipping.")
+        if nchan > ${params.max_nchan_upload}:
+            logger.warning(f"nchan={nchan} is greater than max_nchan_upload=${params.max_nchan_upload}, skipping.")
             continue
         # Grab all the nsub types
         nsub_types = ["1"]
