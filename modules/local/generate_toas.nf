@@ -38,11 +38,14 @@ process GENERATE_TOAS {
             echo "Skipping \${ar} as it has more than one polarization channel"
             continue
         fi
-        # Grab archive and template nchan
         nchan=\$(vap -c nchan \$ar | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-        tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
+        if [ "\$nchan" -gt ${params.max_nchan_upload} ]; then
+            echo "Skipping \${ar} because nchan > ${params.max_nchan_upload}"
+            continue
+        fi
 
         # Use portrait mode if template has more frequency channels
+        tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
         if [ "\$tnchan" -gt "\$nchan" ]; then
             port="-P"
         else
