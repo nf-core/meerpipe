@@ -60,22 +60,20 @@ The observation file is a CSV file with the following columns:
 | Beam #               | An integer from 1 to 4 of the PTUSE machine ID that preprocessed the observations |
 | Observing Band       | The frequency band of the observation (e.g UHF, LBAND or SBAND\_<0-4>)            |
 | Duration (s)         | Duration of the observation in seconds                                            |
+| Mode Duration (s)    | Mode (most common value) of the observation duration for that pulsar in seconds   |
+| Nchan                | Number of frequency channels for the observation                                  |
+| Nbin                 | Number of profile bins in the observation's archive                               |
 | Calibration Location | The path to the calibration file if it exists                                     |
 
 For example, one of the observation files used for testing looks like this:
 
 ```console
-Obs ID,Pulsar Jname,UTC Start,Project Short Name,Beam #,Observing Band,Duration (s),Calibration Location
-35409,J1534-5334,2023-05-05-01:07:10,TPA,1,LBAND,116.53766938317756,None
-9017,J1418-3921,2020-08-08-11:55:30,TPA,4,LBAND,233.7823401869157,None
-2954,J1013-5934,2020-01-04-20:29:13,TPA,1,LBAND,457.50813667289714,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-01-04-18:56:54.jones
-10173,J1410-7404,2020-09-05-10:00:47,TPA,2,LBAND,89.60730437383191,None
-173,J0437-4715,2019-03-26-16:26:02,PTA,1,LBAND,15.999999999999988,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-03-26-16:10:39.jones
-12929,J1919+0021,2020-11-30-14:55:13,TPA,4,LBAND,1318.9994574953269,None
-3608,J0514-4408,2020-02-21-17:50:16,TPA,1,LBAND,1799.9996901682246,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-02-21-17:32:22.jones
-16650,J0900-3144,2021-04-20-14:47:54,RelBin,3,UHF,2047.541722352941,None
-1314,J1811-2405,2019-09-24-13:51:57,RelBin,1,LBAND,7205.578322542057,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-09-24-11:31:01.jones
-1558,J0955-6150,2019-10-07-02:26:56,RelBin,1,LBAND,14402.595572037384,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2019-10-07-02:16:00.jones
+Obs ID,Pulsar Jname,UTC Start,Project Short Name,Beam #,Observing Band,Duration (s),Mode Duration (s),Nchan,Nbin,Calibration Location
+35409,J1534-5334,2023-05-05-01:07:10,TPA,1,LBAND,116.53766938317756,256,1024,1024,None
+9017,J1418-3921,2020-08-08-11:55:30,TPA,4,LBAND,233.7823401869157,256,1024,1024,None
+2954,J1013-5934,2020-01-04-20:29:13,TPA,1,LBAND,457.50813667289714,256,928,1024,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/2020-01-04-18:56:54.jones
+10173,J1410-7404,2020-09-05-10:00:47,TPA,2,LBAND,89.60730437383191,256,1024,1024,None
+173,J0437-4715,2019-03-26-16:26:02,PTA,1,LBAND,15.999999999999988,256,1024,1024,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/019-03-26-16:10:39.jones
 ```
 
 This is difficult for a human to create which is why this file is often created with the [`psrdb`](https://psrdb.readthedocs.io/en/latest/cli.html#observation) command line tool.

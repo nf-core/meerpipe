@@ -55,7 +55,7 @@ The pipeline is described by the following flow diagram and bullet points:
    - `nchan`: Number of frequency channels, default [1, 16, 29, 58, 116, 928]
    - `npol`: Polarisation scrunched (1) and full stokes (4), default [1, 4]
    - nsub (controlled with `use_max_nsub`): Number of time subintegrations. A time scrunched (1) and the largest value of nsub possible while maintaining sensitive ToAs (calculated with [calc_max_nsub](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/calc_max_nsub.py)), default [1, max]
-8. [GENERATE_TOAS](modules/local/generate_toas.nf): Generate ToAs for each combination projects and decimated archives using [pat](https://psrchive.sourceforge.net/manuals/pat/)
+8. [GENERATE_TOAS](modules/local/generate_toas.nf): Generate ToAs for each combination projects and decimated archives with nchan < 32 using [pat](https://psrchive.sourceforge.net/manuals/pat/)
 9. [UPLOAD_TOAS](modules/local/upload_toas.nf): Upload the ToAs to the [Meertime data portal](https://pulsars.org.au)
 10. [GENERATE_RESIDUALS](modules/local/generate_residuals.nf): Once all the UPLOAD_TOA jobs are complete, one of these process will be launched for each pulsar and project. It will download all the ToAs (including those from previous pipeline runs) and generate residuals for each combination of projects and decimated archives using [tempo2](https://bitbucket.org/psrsoft/tempo2/src/master/). These residuals will be uploaded to the [Meertime data portal](https://pulsars.org.au) to allow researchers to interactively check the quality of the observations.
 
