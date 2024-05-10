@@ -15,7 +15,7 @@ process GRAB_ALL_PAIRS {
     val pulsar
 
     output:
-    path "all_pairs.csv"
+    path "all_pairs.csv", emit: out_csv
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,7 +28,37 @@ process GRAB_ALL_PAIRS {
     //               e.g. https://github.com/nf-core/modules/blob/master/modules/nf-core/homer/annotatepeaks/main.nf
     //               Each software used MUST provide the software name and version number in the YAML version file (versions.yml)
     """
-    grab_all_pairs ${pulsar} --out_dir ./
+    if [[ -z "${params.ephemeris}" && -z "${params.template}" ]]; then
+        grab_all_pairs ${pulsar} --out_dir ./
+    else
+        # Make directories
+        mkdir -p ${params.project}/LBAND
+
+        # Handling ephmeris
+        if [ -z "${params.ephemeris}" ]; then
+            echo "Grabbing ephemeris from repo"
+            ephemeris="\$(grab_ephemeris ${pulsar} -p ${params.project})"
+        else
+            echo "Using input ephemeris"
+            ephemeris="${params.ephemeris}"
+        fi
+        cp \${ephemeris} ${params.project}/${pulsar}.par
+        ephemeris="${params.project}/${pulsar}.par"
+
+        # Handling template
+        if [ -z "${params.template}" ]; then
+            echo "Grabbing template from repo"
+            template="\$(grab_template ${pulsar} -p ${params.project})"
+        else
+            echo "Using input template"
+            template="${params.template}"
+        fi
+        cp \${template} ${params.project}/LBAND/${pulsar}.std
+        template="${params.project}/LBAND/${pulsar}.std"
+
+        # Finally make output file
+        echo "${pulsar},${params.project},\$(pwd)/\${ephemeris},\$(pwd)/\${template}" > all_pairs.csv
+    fi
     """
 
     stub:

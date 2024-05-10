@@ -1,0 +1,128 @@
+nextflow_process {
+
+    name "Test Process GRAB_ALL_PAIRS"
+    script "modules/local/grab_all_pairs.nf"
+    process "GRAB_ALL_PAIRS"
+
+    test("Runs if no ephemeris or template given") {
+        tag "short"
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] =  "J0737-3039A"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // Two pairs found
+                { assert path(process.out.out_csv.get(0)).readLines().size() == 2 },
+                // Check each pair ends with ephem and template files
+                {   path(process.out.out_csv.get(0)).readLines().each { line ->
+                        def items = line.split(',')
+                        assert items[2].endsWith("J0737-3039A.par")
+                        assert items[3].endsWith("J0737-3039A.std")
+                    }
+                },
+            )
+        }
+    }
+
+    test("Grabs template if only ephemeris is provided") {
+        tag "short"
+        when {
+            params {
+                outdir = "$outputDir"
+                project = "PTA"
+                ephemeris = "$baseDir/tests/test_data/J0737-3039A.par"
+            }
+            process {
+                """
+                input[0] =  "J0737-3039A"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // One pairs found
+                { assert path(process.out.out_csv.get(0)).readLines().size() == 1 },
+                // Check the input project
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[1] == "PTA" },
+                // Check the input ephemeris
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].endsWith("J0737-3039A.par") },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].contains("PTA") },
+                // Check grabbed a template
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].endsWith("J0737-3039A.std") },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
+            )
+        }
+    }
+
+    test("Grabs ephemeris if only template is provided") {
+        tag "short"
+        when {
+            params {
+                outdir = "$outputDir"
+                project = "PTA"
+                template = "$baseDir/tests/test_data/J0737-3039A.std"
+            }
+            process {
+                """
+                input[0] =  "J0737-3039A"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // One pairs found
+                { assert path(process.out.out_csv.get(0)).readLines().size() == 1 },
+                // Check the input project
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[1] == "PTA" },
+                // Check grabbed a ephemeris
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].endsWith("J0737-3039A.par") },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].contains("PTA") },
+                // Check the input template
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].endsWith("J0737-3039A.std") },
+                { assert !path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
+            )
+        }
+    }
+
+    test("Uses both input ephemeris and tempalte") {
+        tag "short"
+        when {
+            params {
+                outdir = "$outputDir"
+                project = "PTA"
+                ephemeris = "$baseDir/tests/test_data/J0737-3039A.par"
+                template = "$baseDir/tests/test_data/J0737-3039A.std"
+            }
+            process {
+                """
+                input[0] =  "J0737-3039A"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                // One pairs found
+                { assert path(process.out.out_csv.get(0)).readLines().size() == 1 },
+                // Check the input project
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[1] == "PTA" },
+                // Check the input ephemeris
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].endsWith("J0737-3039A.par") },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].contains("PTA") },
+                // Check the input template
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].endsWith("J0737-3039A.std") },
+                { assert !path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
+            )
+        }
+    }
+}

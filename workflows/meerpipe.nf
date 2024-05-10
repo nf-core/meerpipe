@@ -42,6 +42,13 @@ workflow MEERPIPE {
         obs_csv = Channel.fromPath(params.obs_csv)
     }
 
+    if ( params.ephemeris != "" && params.project == "" ) {
+        error "If you provide an ephemeris, you must also provide a project with --project"
+    }
+    if ( params.template != "" && params.project == "" ) {
+        error "If you provide an template, you must also provide a project with --project"
+    }
+
     // Use PSRDB to work out which obs to process
     OBS_LIST(
         params.pulsar,

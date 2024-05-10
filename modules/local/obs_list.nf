@@ -152,7 +152,9 @@ process OBS_LIST {
             shutil.copyfile(ephemeris, f"{project}/{pulsar}.par")
             ephemeris = os.path.join(os.getcwd(), f"{project}/{pulsar}.par")
         else:
-            ephemeris = "${ephemeris}"
+            os.makedirs("${params.project}", exist_ok=True)
+            shutil.copyfile("${ephemeris}", f"${params.project}/{pulsar}.par")
+            ephemeris = os.path.join(os.getcwd(), f"${params.project}/{pulsar}.par")
         if "${template}" in ("", "null"):
             try:
                 template = grab_template(pulsar, project, band, fold=True)
@@ -165,7 +167,10 @@ process OBS_LIST {
                 with open(template, 'w'):
                     pass # Make an empty file
         else:
-            template = "${template}"
+            os.makedirs("LBAND", exist_ok=True)
+            os.makedirs("LBAND/${params.project}", exist_ok=True)
+            shutil.copyfile("${template}", f"LBAND/${params.project}/{pulsar}.std")
+            template = os.path.join(os.getcwd(), f"LBAND/${params.project}/{pulsar}.std")
         ephem_template = {
             "ephemeris": ephemeris,
             "template": template,
@@ -177,6 +182,8 @@ process OBS_LIST {
             else:
                 template_band = template.replace("/fold/", "/").split("/")[-3]
                 template_project = template.replace("/fold/", "/").split("/")[-2]
+                if template_project == "unknown":
+                    template_project = "PTUSE"
                 logger.info(f"Creating template with band: {template_band} project: {template_project} template: {template}")
                 template_response = template_client.create(
                     pulsar,
@@ -188,6 +195,8 @@ process OBS_LIST {
                 ephem_template["template_id"] = get_rest_api_id(template_response, logging.getLogger(__name__))
             # Get or create ephemeris
             ephemeris_project = ephemeris.replace("/fold/", "/").split("/")[-2]
+            if ephemeris_project == "unknown":
+                ephemeris_project = "PTUSE"
             logger.info(f"Creating ephemeris with project: {ephemeris_project} ephemeris: {ephemeris}")
             ephemeris_response = ephemeris_client.create(
                 pulsar,
