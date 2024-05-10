@@ -61,7 +61,7 @@ workflow MEERPIPE {
         // Covert csv into a tupe of the meta map and the files
         files_and_meta = OBS_LIST.out.splitCsv()
         .map {
-            pulsar, utc, project_short, beam, band, dur, mode_dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs, snr, flux, raw_archive, cleaned_archive ->
+            pulsar, utc, project_short, beam, band, dur, mode_dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs, snr, flux, percent_rfi_zapped, raw_archive, cleaned_archive ->
             [
                 [
                     id: "${pulsar}_${utc}_${beam}",
@@ -80,6 +80,7 @@ workflow MEERPIPE {
                     n_obs: n_obs,
                     snr: snr,
                     flux: flux,
+                    percent_rfi_zapped: percent_rfi_zapped,
                 ],
                 file(ephemeris),
                 file(template),
