@@ -13,7 +13,7 @@ process DECIMATE {
     // conda "YOUR-TOOL-HERE"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/meerpipe:latest':
-        'nickswainston/meerpipe:latest' }"
+        'nickswainston/meerpipe:3.0.6' }"
 
     input:
     tuple val(meta), path(template), path(archive)
