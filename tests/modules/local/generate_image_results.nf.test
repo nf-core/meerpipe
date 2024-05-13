@@ -33,7 +33,7 @@ nextflow_process {
                     "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_raw.ar",
                     "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_zap.ar",
                     "$baseDir/tests/test_data/J1534-5334_2023-05-05-01:07:10_1/J1534-5334_2023-05-05-01:07:10_dm_rm_fit.json",
-                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/cleaned_rmfit.png",
+                    "$baseDir/tests/test_data/cleaned_rmfit.png",
                     )
                 ])
                 """
@@ -107,7 +107,7 @@ nextflow_process {
                     "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_raw.ar",
                     "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_zap.ar",
                     "$baseDir/tests/test_data/J1410-7404_2020-09-05-10:00:47_2/J1410-7404_2020-09-05-10:00:47_dm_rm_fit.json",
-                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/cleaned_rmfit.png",
+                    "$baseDir/tests/test_data/cleaned_rmfit.png",
                     )
                 ])
                 """
@@ -181,7 +181,7 @@ nextflow_process {
                     "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_raw.ar",
                     "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_zap.ar",
                     "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/J0437-4715_2019-03-26-16:26:02_dm_rm_fit.json",
-                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/cleaned_rmfit.png",
+                    "$baseDir/tests/test_data/cleaned_rmfit.png",
                     )
                 ])
                 """
@@ -254,7 +254,7 @@ nextflow_process {
                     "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_raw.ar",
                     "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_zap.ar",
                     "$baseDir/tests/test_data/J0514-4408_2020-02-21-17:50:16_1/J0514-4408_2020-02-21-17:50:16_dm_rm_fit.json",
-                    "$baseDir/tests/test_data/J0437-4715_2019-03-26-16:26:02_1/cleaned_rmfit.png",
+                    "$baseDir/tests/test_data/cleaned_rmfit.png",
                     )
                 ])
                 """

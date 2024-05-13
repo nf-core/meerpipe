@@ -74,7 +74,7 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert path(process.out.out_csv.get(0)).readLines().size() == 1 },
-                { assert path(process.out.out_csv.get(0)).readLines()[0].contains("/fold/") },
+                { assert path(path(process.out.out_csv.get(0)).readLines()[0].split(',')[11]).text == path("$baseDir/tests/test_data/J0711+0931_fold.par").text },
             )
         }
     }

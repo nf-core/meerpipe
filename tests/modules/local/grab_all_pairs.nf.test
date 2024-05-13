@@ -89,7 +89,7 @@ nextflow_process {
                 { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].contains("PTA") },
                 // Check the input template
                 { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].endsWith("J0737-3039A.std") },
-                { assert !path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
             )
         }
     }
@@ -121,7 +121,7 @@ nextflow_process {
                 { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[2].contains("PTA") },
                 // Check the input template
                 { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].endsWith("J0737-3039A.std") },
-                { assert !path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
+                { assert path(process.out.out_csv.get(0)).readLines()[0].split(',')[3].contains("PTA") },
             )
         }
     }
