@@ -131,7 +131,7 @@
                 },
                 "nchans": {
                     "type": "string",
-                    "default": "1,16,32,58,116,928",
+                    "default": "1,16,32,928",
                     "description": "Comma separated list of nchans to frequency scrunch the data into",
                     "fa_icon": "fas fa-align-justify"
                 },
