@@ -62,16 +62,17 @@ process UPLOAD_RESULTS {
         # file_loc, file_type, file_res, cleaned
         image_data.append( (toa_file, type, 'high', True) )
 
-    # file_loc, file_type, file_res, cleaned
-    image_data.append( ("raw_profile_ftp.png",    'profile',     'high', False) )
-    image_data.append( ("raw_profile_fts.png",    'profile-pol', 'high', False) )
-    image_data.append( ("raw_phase_time.png",     'phase-time',  'high', False) )
-    image_data.append( ("raw_phase_freq.png",     'phase-freq',  'high', False) )
-    image_data.append( ("raw_bandpass.png",       'bandpass',    'high', False) )
-    image_data.append( ("raw_SNR_cumulative.png", 'snr-cumul',   'high', False) )
-    image_data.append( ("raw_SNR_single.png",     'snr-single',  'high', False) )
-    if os.path.exists("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png"):
-        image_data.append( ("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png", 'dynamic-spectrum', 'high', False) )
+    if [ "${params.refold_prev_ar}" == "false" ]:
+        # file_loc, file_type, file_res, cleaned
+        image_data.append( ("raw_profile_ftp.png",    'profile',     'high', False) )
+        image_data.append( ("raw_profile_fts.png",    'profile-pol', 'high', False) )
+        image_data.append( ("raw_phase_time.png",     'phase-time',  'high', False) )
+        image_data.append( ("raw_phase_freq.png",     'phase-freq',  'high', False) )
+        image_data.append( ("raw_bandpass.png",       'bandpass',    'high', False) )
+        image_data.append( ("raw_SNR_cumulative.png", 'snr-cumul',   'high', False) )
+        image_data.append( ("raw_SNR_single.png",     'snr-single',  'high', False) )
+        if os.path.exists("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png"):
+            image_data.append( ("${meta.pulsar}_${meta.utc}_raw.ar.dynspec.png", 'dynamic-spectrum', 'high', False) )
     if not raw_only:
         image_data.append( ("cleaned_profile_ftp.png",    'profile',     'high', True ) )
         image_data.append( ("cleaned_profile_fts.png",    'profile-pol', 'high', True ) )
