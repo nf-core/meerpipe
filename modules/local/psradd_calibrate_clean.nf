@@ -162,7 +162,7 @@ process PSRADD_CALIBRATE_CLEAN {
         echo "The raw archive will not be refolded as it is not stored, creating a dummy raw file"
         touch "${meta.pulsar}_${meta.utc}_raw_empty.ar"
         echo "Refold the previously cleaned and flux calibrated archive"
-        pam -m -E ${ephemeris} ${cleaned_archive}
+        pam -m  --update_dm -E ${ephemeris} ${cleaned_archive}
         #the below is just in case the original cleaned archive didn't have the same naming convention
         #first test if the cleaned archive is the same as the one in the directory
         #the tr command removes the backslashes in the name but gives out a warning which is ignored
