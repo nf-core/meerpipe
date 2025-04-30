@@ -67,8 +67,10 @@ process DM_RM_CALC {
         pat -jp \$port -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM ${meta.pulsar}_${meta.utc}_zap.dmcalc > dm.tim
 
         echo -e "\\nCalc DM with tempo2\\n----------------------------------"
+        # Remove FD parameters
+        sed '/^FD[1-9]/d' ${ephemeris} > ${ephemeris}.dm
         # Remove dm derivatives
-        sed '/^DM[1-9]/d' ${ephemeris} > ${ephemeris}.dm
+        sed '/^DM[1-9]/d' ${ephemeris}.dm > ${ephemeris}.dm
         echo "MODE 1" >>  ${ephemeris}.dm
         # Remove zero S/N TOAs
         sed -i '/-snr 0 /d' dm.tim
