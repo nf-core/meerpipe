@@ -50,7 +50,6 @@ process GENERATE_TOAS {
             port="-P"
         else
             port=""
-            echo "WARNING: Template has fewer frequency channels than archive (\$tnchan < \$nchan). Using f-scrunched template"
         fi
 
         echo "Generating TOAs for \${ar}.tim\n----------------------------------"
