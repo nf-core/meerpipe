@@ -40,6 +40,13 @@ workflow ONLY_DM_RM_CALC {
         exit(1)
     }
 
+    if ( params.ephemeris != "" && params.project == "" ) {
+        error "If you provide an ephemeris, you must also provide a project with --project"
+    }
+    if ( params.template != "" && params.project == "" ) {
+        error "If you provide an template, you must also provide a project with --project"
+    }
+
     // Use PSRDB to work out which obs to process
     OBS_LIST(
         params.pulsar,
