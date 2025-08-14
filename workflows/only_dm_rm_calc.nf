@@ -101,7 +101,7 @@ workflow ONLY_DM_RM_CALC {
         UPLOAD_DM_RM_RESULTS(
             DM_RM_CALC.out.map {
                 meta, ephemeris, template, raw_archive, cleaned_archive, results_json, rm_image, dm_image ->
-                [ meta, results_json, rm_image, dm_image ]
+                [ meta, results_json, [rm_image, dm_image] ]
             }
         )
     }
