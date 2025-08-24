@@ -32,12 +32,23 @@ process GENERATE_IMAGE_RESULTS {
     # psrplot images
     raw_archive=${raw_archive}
     cleaned_archive=${cleaned_archive}
-    type_file_array=(${ template.baseName == "no_template" ? '"raw ${raw_archive}"' : '"raw ${raw_archive}" "cleaned ${cleaned_archive}"' })
+
+    # Determine type_file_array based on conditions
+    type_file_array=()
+    if [ "${params.refold_prev_ar}" == "true" ]; then
+        type_file_array+=("cleaned ${cleaned_archive}")
+    elif [ "${template.baseName}" == "no_template" ]; then
+        type_file_array+=("raw ${raw_archive}")
+    else
+        type_file_array+=("raw ${raw_archive}" "cleaned ${cleaned_archive}")
+    fi
+
     for i in "\${type_file_array[@]}"; do
+        echo "Plotting: \$i" 
         set -- \$i
         type=\$1
         file=\$2
-        # Do the plots for raw file then cleaned file
+        echo "Type: \$type, File: \$file"
         psrplot -p flux -jFTDp -jC                          -g 1024x768 -c above:l= -c above:c="Stokes I Profile (\${type})"     -D \${type}_profile_fts.png/png \$file
         psrplot -p Scyl -jFTD  -jC                          -g 1024x768 -c above:l= -c above:c="Polarisation Profile (\${type})" -D \${type}_profile_ftp.png/png \$file
         psrplot -p freq -jTDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Frequency (\${type})"  -D \${type}_phase_freq.png/png  \$file
@@ -45,8 +56,10 @@ process GENERATE_IMAGE_RESULTS {
         psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -c skip=1 -g 1024x768 -c above:l= -c above:c="Bandpass (\${type})"     -D \${type}_bandpass.png/png    \$file
     done
 
-    # Create flux and polarisation scrunched archive for SNR images
-    pam -Fp -e rawFp ${raw_archive}
+    if [ "${params.refold_prev_ar}" == "false" ]; then
+        # Create flux and polarisation scrunched archive for SNR images
+        pam -Fp -e rawFp ${raw_archive}
+    fi
     if [ "${template.baseName}" != "no_template" ]; then
         pam -Fp -e cleanFp ${cleaned_archive}
         # Create a frequency, time and polarisation scrunched file for flux calc
@@ -62,11 +75,15 @@ process GENERATE_IMAGE_RESULTS {
             pam -b \$((std_nbin / obs_nbin)) -e new_std ${template}
             std_template=*new_std
         fi
-        psrflux -s \${std_template} -e dynspec ${raw_archive}
+        if [ "${params.refold_prev_ar}" == "false" ]; then
+            psrflux -s \${std_template} -e dynspec ${raw_archive}
+        fi
         psrflux -s \${std_template} -e dynspec ${cleaned_archive}
     fi
 
     # Create matplotlib images and dump the results calculations into a results.json file
+    # The raw_Fp option is not used in the OzGrav/meerpipe generate_images_results script if refold_prev_ar is true
+    # Same thing for cleanFp and cleanFTp if raw_only is true
     generate_images_results \\
         --pid ${meta.project_short} \\
         --raw_file ${raw_archive} \\
@@ -80,7 +97,8 @@ process GENERATE_IMAGE_RESULTS {
         --snr ${meta.snr} \\
         --flux ${meta.flux} \\
         --dm_file ${dm_results} \\
-        ${ template.baseName == "no_template" ? "--raw_only" : "" }
+        ${ template.baseName == "no_template" ? "--raw_only" : "" } \\
+        ${ params.refold_prev_ar ? "--cleaned_only" : "" }
     """
 
     stub:

@@ -94,6 +94,11 @@
                     "fa_icon": "fas fa-angle-double-left",
                     "description": "Use the previously created calibrated and cleaned archive in the output directory."
                 },
+                "refold_prev_ar": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-angle-double-left",
+                    "description": "Refold the previously created calibrated and cleaned archive in the output directory. The raw archive and plots will not be re-made."
+                },
                 "use_edge_subints": {
                     "type": "boolean",
                     "description": "Use first and last 8 second subints of observation archives.",

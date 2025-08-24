@@ -46,7 +46,10 @@ workflow MEERPIPE {
         error "If you provide an ephemeris, you must also provide a project with --project"
     }
     if ( params.template != "" && params.project == "" ) {
-        error "If you provide an template, you must also provide a project with --project"
+        error "If you provide a template, you must also provide a project with --project"
+    }
+    if ( params.use_prev_ar == true && params.refold_prev_ar == true ) {
+        error "You cannot use both --use_prev_ar and --refold_prev_ar"
     }
 
     // Use PSRDB to work out which obs to process
@@ -65,7 +68,7 @@ workflow MEERPIPE {
     )
 
     if ( params.use_prev_ar) {
-        // Covert csv into a tupe of the meta map and the files
+        // Convert csv into a tupe of the meta map and the files
         files_and_meta = OBS_LIST.out.splitCsv()
         .map {
             pulsar, utc, project_short, beam, band, dur, mode_dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs, snr, flux, percent_rfi_zapped, raw_archive, cleaned_archive ->
@@ -95,11 +98,42 @@ workflow MEERPIPE {
                 file(cleaned_archive),
             ]
         }
-    } else {
-        // Covert csv into a tupe of the meta map and the files
+    } else if ( params.refold_prev_ar ) {
+        // Convert csv into a tuple of the meta map and the files
         obs_data = OBS_LIST.out.splitCsv()
         .map {
-            pulsar, utc, project_short, beam, band, dur, mode_dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs ->
+            pulsar, utc, project_short, beam, band, dur, mode_dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs, percent_rfi_zapped, raw_archive, cleaned_archive ->
+            [
+                [
+                    id: "${pulsar}_${utc}_${beam}",
+                    pulsar: pulsar,
+                    utc: utc,
+                    beam: beam,
+                    project_short: project_short,
+                    band: band,
+                    dur: dur,
+                    mode_dur: mode_dur,
+                    obs_nchan: obs_nchan,
+                    obs_nbin: obs_nbin,
+                    pipe_id: pipe_id,
+                    nchans: params.nchans.split(',').collect { it.toInteger() },
+                    npols:params.npols.split(',').collect  { it.toInteger() },
+                    n_obs: n_obs,
+                    percent_rfi_zapped: percent_rfi_zapped,
+                ],
+                file(cal_loc), 
+                file(ephemeris),
+                file(template),
+                file(raw_archive),
+                file(cleaned_archive),
+            ]
+        }
+    } else {
+        // This is if refold prev ar and use prev ar are both false
+        // Convert csv into a tuple of the meta map and the files
+        obs_data = OBS_LIST.out.splitCsv()
+        .map {
+            pulsar, utc, project_short, beam, band, dur, mode_dur, obs_nchan, obs_nbin, cal_loc, pipe_id, ephemeris, template, n_obs, raw_archive, cleaned_archive ->
             [
                 [
                     id: "${pulsar}_${utc}_${beam}",
@@ -117,13 +151,18 @@ workflow MEERPIPE {
                     npols:params.npols.split(',').collect  { it.toInteger() },
                     n_obs: n_obs,
                 ],
-                cal_loc,
-                ephemeris,
-                template,
+                file(cal_loc),
+                file(ephemeris),
+                file(template),
+                file(raw_archive), 
+                file(cleaned_archive) // This is here passed as empty_clean.ar 
             ]
         }
+    }
 
+    if (params.use_prev_ar == false) {
         // Combine archives,flux calibrate Clean of RFI with MeerGaurd
+        // obs_data is not defined if use_prev_ar is true so this will not run if use_prev_ar is true
         PSRADD_CALIBRATE_CLEAN( obs_data )
 
         files_and_meta = PSRADD_CALIBRATE_CLEAN.out
@@ -149,14 +188,15 @@ workflow MEERPIPE {
                         snr: snr,
                         flux: flux,
                     ],
-                    ephemeris,
-                    template,
-                    raw_archive,
-                    cleaned_archive,
+                    file(ephemeris),
+                    file(template),
+                    file(raw_archive),
+                    file(cleaned_archive),
                 ]
             }
 
         // Calculate the DM with tempo2 or pdmp
+        // This is run on the cleaned archive and does not require a raw archive though it is passed through for the next step. It will also run if use_prev_ar or refold_prev_ar are true.
         DM_RM_CALC( files_and_meta )
 
         // Other images using matplotlib and psrplot and make a results.json
