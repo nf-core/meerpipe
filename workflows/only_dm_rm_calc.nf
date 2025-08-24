@@ -40,6 +40,13 @@ workflow ONLY_DM_RM_CALC {
         exit(1)
     }
 
+    if ( params.ephemeris != "" && params.project == "" ) {
+        error "If you provide an ephemeris, you must also provide a project with --project"
+    }
+    if ( params.template != "" && params.project == "" ) {
+        error "If you provide an template, you must also provide a project with --project"
+    }
+
     // Use PSRDB to work out which obs to process
     OBS_LIST(
         params.pulsar,
@@ -93,8 +100,8 @@ workflow ONLY_DM_RM_CALC {
     if ( params.upload ) {
         UPLOAD_DM_RM_RESULTS(
             DM_RM_CALC.out.map {
-                meta, ephemeris, template, raw_archive, cleaned_archive, results_json, rm_image ->
-                [ meta, results_json, rm_image ]
+                meta, ephemeris, template, raw_archive, cleaned_archive, results_json, rm_image, dm_image ->
+                [ meta, results_json, [rm_image, dm_image] ]
             }
         )
     }
