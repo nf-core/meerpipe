@@ -249,6 +249,15 @@
                     "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
+                },                
+                "max_memory_per_cpu": {
+                    "type": "string",
+                    "description": "Maximum amount of memory that can be requested per CPU in a job.",
+                    "default": "100.GB",
+                    "fa_icon": "fas fa-memory",
+                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the memory requirement for each CPU. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
                 },
                 "max_time": {
                     "type": "string",
