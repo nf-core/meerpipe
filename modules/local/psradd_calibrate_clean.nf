@@ -173,7 +173,7 @@ process PSRADD_CALIBRATE_CLEAN {
 
         if [ "\${normalised_cleaned_archive}" != "\${normalised_expected_archive}" ]; then
             mv "${cleaned_archive}" "${meta.pulsar}_${meta.utc}_zap.ar"
-            echo "New cleaned archive has not got the same name as the old cleaned archive (\${normalised_cleaned_archive} != \${normalised_expected_archive}) but replacing old archive with new archive
+            echo "New cleaned archive has not got the same name as the old cleaned archive (\${normalised_cleaned_archive} != \${normalised_expected_archive}) but replacing old archive with new archive"
         fi
 
         pam -FTp -e FTp ${meta.pulsar}_${meta.utc}_zap.ar
