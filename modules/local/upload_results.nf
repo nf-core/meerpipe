@@ -62,7 +62,7 @@ process UPLOAD_RESULTS {
         # file_loc, file_type, file_res, cleaned
         image_data.append( (toa_file, type, 'high', True) )
 
-    if [ "${params.refold_prev_ar}" == "false" ]:
+    if  "${params.refold_prev_ar}" == "false" :
         # file_loc, file_type, file_res, cleaned
         image_data.append( ("raw_profile_ftp.png",    'profile',     'high', False) )
         image_data.append( ("raw_profile_fts.png",    'profile-pol', 'high', False) )
