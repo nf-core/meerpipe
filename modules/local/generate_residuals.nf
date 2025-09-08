@@ -27,12 +27,6 @@ process GENERATE_RESIDUALS {
     """
     # Loop over each of the TOA filters set in params
     nsub_types="1"
-    if ${params.use_max_nsub}; then
-        nsub_types="\${nsub_types} max"
-    fi
-    if ${params.use_mode_nsub}; then
-        nsub_types="\${nsub_types} mode"
-    fi
     for nsub_type in \${nsub_types}; do
         for nchan in ${meta.nchans.join(' ')}; do
             if ((nchan > ${params.max_nchan_upload})); then
