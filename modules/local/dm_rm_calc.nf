@@ -73,7 +73,7 @@ process DM_RM_CALC {
         # Remove zero S/N TOAs
         sed -i '/-snr 0 /d' dm.tim
         # Fit for DM
-        tempo2 -nofit -fit DM -set START 40000 -set FINISH 99999 -f ${ephemeris}.dm -outpar ${ephemeris}.dmfit dm.tim
+        tempo2 -nofit -fit DM -set NE_SW 0 -set START 40000 -set FINISH 99999 -outpar ${ephemeris}.dmfit -f ${ephemeris}.dm dm.tim 
         # Plot DM fit residuals as a function of frequency
         tempo2 -gr plk  -nofit -set START 40000 -set FINISH 99999 -f ${ephemeris}.dmfit  dm.tim -yplot 2 -xplot 7 -grdev cleaned_dmfit.png/png -publish -us       
         input_rm=\$(vap -c rm ${meta.pulsar}_${meta.utc}_zap.rmcalc | tail -n 1| tr -s ' ' | cut -d ' ' -f 2)
