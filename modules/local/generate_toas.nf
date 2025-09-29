@@ -46,10 +46,12 @@ process GENERATE_TOAS {
 
         # Use portrait mode if template has more frequency channels
         tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
-        if [ "\$tnchan" -gt "\$nchan" ]; then
+        if [ "\$tnchan" -ge "\$nchan" ]; then
             port="-P"
+            echo "Using portrait mode with \$tnchan channel template"
         else
             port=""
+            echo "WARNING: Not using portrait mode"
         fi
 
         echo "Generating TOAs for \${ar}.tim\n----------------------------------"
