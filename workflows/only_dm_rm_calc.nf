@@ -40,6 +40,11 @@ workflow ONLY_DM_RM_CALC {
         exit(1)
     }
 
+    if ( params.refold_prev_ar ) {
+        error "You cannot use --refold_prev_ar for this pipeline"
+        exit(1)
+    }
+
     if ( params.ephemeris != "" && params.project == "" ) {
         error "If you provide an ephemeris, you must also provide a project with --project"
     }
