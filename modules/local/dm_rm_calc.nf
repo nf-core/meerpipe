@@ -59,10 +59,12 @@ process DM_RM_CALC {
         # Grab template nchan
         tnchan=\$(vap -c nchan ${template} | tail -n 1 | tr -s ' ' | cut -d ' ' -f 2)
         # Use portrait mode if template has more frequency channels
-        if [ "\$tnchan" -gt "\$nchan" ]; then
+        if [ "\$tnchan" -ge "\$nchan" ] && [ "\$tnchan" -gt 1 ]; then
             port="-P"
+            echo "Using portrait mode with \$tnchan channel template"
         else
             port=""
+            echo "WARNING: Not using portrait mode"
         fi
         pat -jp \$port -f "tempo2 IPTA" -C "chan rcvr snr length subint" -s ${template} -A FDM ${meta.pulsar}_${meta.utc}_zap.dmcalc > dm.tim
 
