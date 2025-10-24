@@ -19,7 +19,7 @@ process PSRADD_CALIBRATE_CLEAN {
     //raw archive input is not used here
     //it's empty_raw.ar normally, except in the case where the pipeline was run without a template and thus created a raw archive only
     output:
-    tuple val(meta), path(ephemeris), path(template), path("${meta.pulsar}_${meta.utc}_{raw,raw_empty}.ar"), path("${meta.pulsar}_${meta.utc}_zap.ar"), env(SNR), env(FLUX)
+    tuple val(meta), path(ephemeris), path(template), path("${meta.pulsar}_${meta.utc}_raw*.ar"), path("${meta.pulsar}_${meta.utc}_zap.ar"), env(SNR), env(FLUX)
     //IF refold_prev_ar is true a raw archive will not be recreated thus we will create an empty file
     when:
     task.ext.when == null || task.ext.when
