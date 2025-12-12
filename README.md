@@ -52,7 +52,7 @@ The pipeline is described by the following flow diagram and bullet points:
 5. [UPLOAD_IMAGE_RESULTS](modules/local/upload_image_results.nf): Upload the images and `results.json` to the [Meertime data portal](https://pulsars.org.au)
 6. [GRAB_ALL_PAIRS](modules/local/grab_all_pairs.nf): Grab all pairs of ephemerides and template files from the [private repository](https://ozgrav.github.io/meerkat_pulsar_docs/ephem_template/) for each pulsar and project. These will be used to create different ToAs for each project.
 7. [DECIMATE](modules/local/decimate.nf): Remove the edge frequency channels with [chop_edge_channels](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/chop_edge_channels.py) then decimate the archives with [pam](https://psrchive.sourceforge.net/manuals/pam/) for each of the combinations of the following params:
-   - `nchan`: Number of frequency channels, default [1, 16, 29, 58, 116, 928]
+   - `nchan`: Number of frequency channels, default [1, 8, 16, 29, 58, 116, 928]
    - `npol`: Polarisation scrunched (1) and full stokes (4), default [1, 4]
    - nsub (controlled with `use_max_nsub`): Number of time subintegrations. A time scrunched (1) and the largest value of nsub possible while maintaining sensitive ToAs (calculated with [calc_max_nsub](https://github.com/OZGrav/meerpipe/blob/main/meerpipe/scripts/calc_max_nsub.py)), default [1, max]
 8. [GENERATE_TOAS](modules/local/generate_toas.nf): Generate ToAs for each combination projects and decimated archives with nchan < 32 using [pat](https://psrchive.sourceforge.net/manuals/pat/)
