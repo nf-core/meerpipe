@@ -70,7 +70,7 @@ process DM_RM_CALC {
 
         echo -e "\\nCalc DM with tempo2\\n----------------------------------"
         # Remove FD and DMX parameters
-        sed -e '/^FD[1-9]/d' -e '/^DM[1-9]/d -e '/^NE_SW/d' ${ephemeris} > ${ephemeris}.dm
+        sed -e '/^FD[1-9]/d' -e '/^DM[1-9]/d' -e '/^NE_SW/d' ${ephemeris} > ${ephemeris}.dm
         echo "MODE 1" >>  ${ephemeris}.dm
         # Remove zero S/N TOAs
         sed -i '/-snr 0 /d' dm.tim
