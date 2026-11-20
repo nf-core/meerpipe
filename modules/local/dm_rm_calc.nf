@@ -101,6 +101,8 @@ process DM_RM_CALC {
         lower_rm=\$(echo "\$input_rm - \$rm_range" | bc -l)
         higher_rm=\$(echo "\$input_rm + \$rm_range" | bc -l)
         echo -e "\\nFit for RM from \$lower_rm - \$higher_rm with \$rm_steps steps\\n----------------------------------"
+        export PGPLOT_BACKGROUND=white
+        export PGPLOT_FOREGROUND=black
         rmfit -D -m \$lower_rm,\$higher_rm,\$rm_steps ${meta.pulsar}_${meta.utc}_zap.rmcalc -K /PNG > rmfit_output.txt 2>&1
         if [ -f pgplot.png ]; then
             mv pgplot.png cleaned_rmfit.png
