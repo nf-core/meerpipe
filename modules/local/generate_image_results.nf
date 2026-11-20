@@ -43,6 +43,10 @@ process GENERATE_IMAGE_RESULTS {
         type_file_array+=("raw ${raw_archive}" "cleaned ${cleaned_archive}")
     fi
 
+    #Set background to white
+    export PGPLOT_BACKGROUND=white
+    export PGPLOT_FOREGROUND=black
+
     for i in "\${type_file_array[@]}"; do
         echo "Plotting: \$i" 
         set -- \$i
