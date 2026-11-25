@@ -53,11 +53,11 @@ process GENERATE_IMAGE_RESULTS {
         type=\$1
         file=\$2
         echo "Type: \$type, File: \$file"
-        psrplot -p flux -jFTDp -jC                          -g 1024x768 -c above:l= -c above:c="Stokes I Profile (\${type})"     -D \${type}_profile_fts.png/png \$file
-        psrplot -p Scyl -jFTD  -jC                          -g 1024x768 -c above:l= -c above:c="Polarisation Profile (\${type})" -D \${type}_profile_ftp.png/png \$file
-        psrplot -p freq -jTDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Frequency (\${type})"  -D \${type}_phase_freq.png/png  \$file
-        psrplot -p time -jFDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Time (\${type})"       -D \${type}_phase_time.png/png  \$file
-        psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -c skip=1 -g 1024x768 -c above:l= -c above:c="Bandpass (\${type})"     -D \${type}_bandpass.png/png    \$file
+        psrplot -p flux -jFTDp -jC                          -g 1024x768 -c above:l= -c above:c="Stokes I Profile (\${type})"     -c cf=2,lw=2     -D \${type}_profile_fts.png/png \$file
+        psrplot -p Scyl -jFTD  -jC                          -g 1024x768 -c above:l= -c above:c="Polarisation Profile (\${type})" -c cf=2,lw=2     -D \${type}_profile_ftp.png/png \$file
+        psrplot -p freq -jTDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Frequency (\${type})"  -c cf=2,lw=2     -D \${type}_phase_freq.png/png  \$file
+        psrplot -p time -jFDp  -jC                          -g 1024x768 -c above:l= -c above:c="Phase vs. Time (\${type})"       -c cf=2,lw=2     -D \${type}_phase_time.png/png  \$file
+        psrplot -p b -x -jT -lpol=0,1 -O -c log=1 -c skip=1 -g 1024x768 -c above:l= -c above:c="Bandpass (\${type})"             -c cf=2,lw=2     -D \${type}_bandpass.png/png    \$file
     done
 
     if [ "${params.refold_prev_ar}" == "false" ]; then
