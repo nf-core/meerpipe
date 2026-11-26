@@ -76,7 +76,7 @@ Obs ID,Pulsar Jname,UTC Start,Project Short Name,Beam #,Observing Band,Duration 
 173,J0437-4715,2019-03-26-16:26:02,PTA,1,LBAND,15.999999999999988,256,1024,1024,/fred/oz005/users/aparthas/reprocessing_MK/poln_calibration/019-03-26-16:10:39.jones
 ```
 
-This is difficult for a human to create which is why this file is often created with the [`psrdb`](https://psrdb.readthedocs.io/en/latest/cli.html#observation) command line tool.
+This is difficult for a human to create which is why this file is often created with the [`psrdb`](https://gitlab.com/CAS-eResearch/GWDC/psrdb2) command line tool.
 For example you can use psrdb to download all observations where the processing failed like so:
 
 ```console
