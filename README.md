@@ -20,7 +20,7 @@
 ## Introduction
 
 **nf-core/meerpipe** is a astronomy pipeline that processes MeerKAT pulsar data to produce images and data products for pulsar timing analysis as part of the [MeerTime project](http://www.meertime.org/) ([Bailes et al. 2020](https://ui.adsabs.harvard.edu/abs/2020PASA...37...28B/abstract)).
-The images and results are uploaded to the [Meertime data portal](https://pulsars.org.au) where the observation quality can be checked before downloading the results and pulse Time of Arrivals (ToA) using [psrdb](https://psrdb.readthedocs.io/en/latest/).
+The images and results are uploaded to the [Meertime data portal](https://pulsars.org.au) where the observation quality can be checked before downloading the results and pulse Time of Arrivals (ToA) using [psrdb](https://gitlab.com/CAS-eResearch/GWDC/psrdb2).
 
 The pipeline is described by the following flow diagram and bullet points:
 
